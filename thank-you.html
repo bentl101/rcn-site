@@ -147,36 +147,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   document.getElementById('hamburger').addEventListener('click', function() {
     document.getElementById('mainNav').classList.toggle('open');
   });
-  // Read enhanced conversion data from sessionStorage (stored by form pages on submit)
-  var leadEmail = sessionStorage.getItem('lead_email') || '';
-  var leadPhone = sessionStorage.getItem('lead_phone') || '';
-  var leadFirst = sessionStorage.getItem('lead_first_name') || '';
-  var leadLast = sessionStorage.getItem('lead_last_name') || '';
-  // GTM conversion event
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    'event': 'lead_form_complete',
-    'conversion_page': document.title,
-    'enhanced_conversion_data': {
+  // Only fire conversion events if a form was actually submitted
+  var leadEmail = sessionStorage.getItem('lead_email');
+  if (leadEmail) {
+    var leadPhone = sessionStorage.getItem('lead_phone') || '';
+    var leadFirst = sessionStorage.getItem('lead_first_name') || '';
+    var leadLast = sessionStorage.getItem('lead_last_name') || '';
+    // GTM conversion event
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      'event': 'lead_form_complete',
+      'conversion_page': document.title,
+      'enhanced_conversion_data': {
+        'email': leadEmail,
+        'phone_number': leadPhone,
+        'first_name': leadFirst,
+        'last_name': leadLast
+      }
+    });
+    // Google Ads conversion event
+    gtag('set', 'user_data', {
       'email': leadEmail,
       'phone_number': leadPhone,
-      'first_name': leadFirst,
-      'last_name': leadLast
-    }
-  });
-  // Google Ads conversion event
-  gtag('set', 'user_data', {
-    'email': leadEmail,
-    'phone_number': leadPhone,
-    'address': { 'first_name': leadFirst, 'last_name': leadLast }
-  });
-  gtag('event', 'conversion', {
-    'send_to': 'AW-10929471967/wiFkCM3XupwYEN-Dytso'
-  });
-  // Clean up lead data from sessionStorage
-  ['lead_email','lead_phone','lead_first_name','lead_last_name'].forEach(function(k) {
-    sessionStorage.removeItem(k);
-  });
+      'address': { 'first_name': leadFirst, 'last_name': leadLast }
+    });
+    gtag('event', 'conversion', {
+      'send_to': 'AW-10929471967/wiFkCM3XupwYEN-Dytso'
+    });
+    // Clean up so refreshing the page doesn't fire again
+    ['lead_email','lead_phone','lead_first_name','lead_last_name'].forEach(function(k) {
+      sessionStorage.removeItem(k);
+    });
+  }
 </script>
 </body>
 </html>
