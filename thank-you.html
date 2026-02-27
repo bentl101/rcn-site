@@ -9,16 +9,24 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="assets/css/style.css?v=20260226a">
   <link rel="icon" href="images/logo-three.png" type="image/png">
-  <!-- Google Tag Manager — TODO: replace GTM-XXXXXXX with your container ID -->
+  <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-XXXXXXX');</script>
+  })(window,document,'script','dataLayer','GTM-5B2VFP82');</script>
+  <!-- Google Ads conversion tracking -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-10929471967"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-10929471967');
+  </script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5B2VFP82"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <header class="site-header">
@@ -139,11 +147,35 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   document.getElementById('hamburger').addEventListener('click', function() {
     document.getElementById('mainNav').classList.toggle('open');
   });
-  // GTM conversion event - fires on thank-you page load
+  // Read enhanced conversion data from sessionStorage (stored by form pages on submit)
+  var leadEmail = sessionStorage.getItem('lead_email') || '';
+  var leadPhone = sessionStorage.getItem('lead_phone') || '';
+  var leadFirst = sessionStorage.getItem('lead_first_name') || '';
+  var leadLast = sessionStorage.getItem('lead_last_name') || '';
+  // GTM conversion event
   window.dataLayer = window.dataLayer || [];
   window.dataLayer.push({
     'event': 'lead_form_complete',
-    'conversion_page': document.title
+    'conversion_page': document.title,
+    'enhanced_conversion_data': {
+      'email': leadEmail,
+      'phone_number': leadPhone,
+      'first_name': leadFirst,
+      'last_name': leadLast
+    }
+  });
+  // Google Ads conversion event
+  gtag('set', 'user_data', {
+    'email': leadEmail,
+    'phone_number': leadPhone,
+    'address': { 'first_name': leadFirst, 'last_name': leadLast }
+  });
+  gtag('event', 'conversion', {
+    'send_to': 'AW-10929471967/wiFkCM3XupwYEN-Dytso'
+  });
+  // Clean up lead data from sessionStorage
+  ['lead_email','lead_phone','lead_first_name','lead_last_name'].forEach(function(k) {
+    sessionStorage.removeItem(k);
   });
 </script>
 </body>
