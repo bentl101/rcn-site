@@ -193,7 +193,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="hidden" name="utm_campaign" value="">
         <input type="hidden" name="utm_term" value="">
         <input type="hidden" name="utm_content" value="">
-        <input type="hidden" name="gclid" value="">
+        <input type="hidden" name="click_id" value="">
+        <input type="hidden" name="click_id_type" value="">
+        <input type="hidden" name="device_type" value="">
         <input type="hidden" name="landing_page" value="">
         <input type="hidden" name="referrer" value="">
         <input type="hidden" name="page_load_time" value="">
@@ -324,14 +326,27 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // UTM & landing page tracking
   (function() {
     var params = new URLSearchParams(window.location.search);
-    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid'];
+    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
     utmKeys.forEach(function(k) { var v = params.get(k); if (v) sessionStorage.setItem(k, v); });
+    var clickIdParams = ['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'];
+    clickIdParams.forEach(function(k) {
+      var v = params.get(k);
+      if (v && !sessionStorage.getItem('click_id')) {
+        sessionStorage.setItem('click_id', v);
+        sessionStorage.setItem('click_id_type', k);
+      }
+    });
+    var ua = navigator.userAgent;
+    var deviceType = /Mobi|Android.*Mobile|iPhone|iPod/.test(ua) ? 'Mobile'
+      : /iPad|Android(?!.*Mobile)|Tablet/.test(ua) ? 'Tablet' : 'Desktop';
     if (!sessionStorage.getItem('landing_page')) sessionStorage.setItem('landing_page', window.location.href);
     document.querySelectorAll('form').forEach(function(form) {
-      utmKeys.concat(['landing_page']).forEach(function(k) {
+      utmKeys.concat(['click_id','click_id_type','landing_page']).forEach(function(k) {
         var input = form.querySelector('input[name="'+k+'"]');
         if (input) input.value = sessionStorage.getItem(k) || '';
       });
+      var dtInput = form.querySelector('input[name="device_type"]');
+      if (dtInput) dtInput.value = deviceType;
       var refInput = form.querySelector('input[name="referrer"]');
       if (refInput) refInput.value = document.referrer || 'direct';
       var loadInput = form.querySelector('input[name="page_load_time"]');
