@@ -217,12 +217,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="travel_date">Preferred Travel Date</label>
-            <input type="month" id="travel_date" name="travel_date" min="2026-03">
+            <label for="travel_date">Preferred Travel Date *</label>
+            <input type="month" id="travel_date" name="travel_date" min="2026-03" required>
           </div>
           <div class="form-group">
-            <label for="duration">Duration</label>
-            <select id="duration" name="duration">
+            <label for="duration">Duration *</label>
+            <select id="duration" name="duration" required>
               <option value="">— Select —</option>
               <option>7–8 days</option>
               <option>10–12 days</option>
@@ -234,8 +234,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="guests">Number of Guests</label>
-            <select id="guests" name="guests">
+            <label for="guests">Number of Guests *</label>
+            <select id="guests" name="guests" required>
               <option value="">— Select —</option>
               <option>1</option>
               <option>2</option>
@@ -244,8 +244,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </select>
           </div>
           <div class="form-group">
-            <label for="budget">Budget per person (CAD)</label>
-            <select id="budget" name="budget">
+            <label for="budget">Budget per person (CAD) *</label>
+            <select id="budget" name="budget" required>
               <option value="">— Select —</option>
               <option>Flexible</option>
               <option>$12,000+</option>
@@ -257,9 +257,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </div>
         </div>
         <div class="form-group">
-          <label for="operator">Preferred Cruise Line</label>
-          <select id="operator" name="operator">
-            <option value="">— Any / No preference —</option>
+          <label for="operator">Preferred Cruise Line *</label>
+          <select id="operator" name="operator" required>
+            <option value="">— Select —</option>
+            <option>Other</option>
             <option>Avalon Waterways</option>
             <option>Scenic</option>
             <option>Emerald Cruises</option>
@@ -351,7 +352,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
-    form.addEventListener('submit', function() {
+    form.addEventListener('submit', function(e) {
+      // Block double-submit
+      if (form.dataset.submitted) { e.preventDefault(); return; }
+      // Block if phone invalid or too short
+      var phoneEl = form.querySelector('#phone');
+      if (phoneEl) {
+        var pv = phoneEl.value.replace(/\s+/g, '');
+        if (pv && (phoneEl.dataset.phoneInvalid || pv.length < 6)) {
+          e.preventDefault();
+          phoneEl.focus();
+          return;
+        }
+      }
+      form.dataset.submitted = 'true';
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
       var val = function(n) { var el = form.querySelector('[name="'+n+'"]'); return el ? el.value : ''; };
       var loadTs = parseInt(val('page_load_time') || '0');
       var timeOnPage = loadTs ? Math.round((Date.now() - loadTs) / 1000) : 0;
@@ -389,6 +405,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
+<script src="/assets/js/phone-validate.js"></script>
 </body>
 </html>
   

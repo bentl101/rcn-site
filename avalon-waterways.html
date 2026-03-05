@@ -229,12 +229,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="travel_date">Preferred Travel Date</label>
-            <input type="month" id="travel_date" name="travel_date" min="2026-03">
+            <label for="travel_date">Preferred Travel Date *</label>
+            <input type="month" id="travel_date" name="travel_date" min="2026-03" required>
           </div>
           <div class="form-group">
-            <label for="duration">Trip Duration</label>
-            <select id="duration" name="duration">
+            <label for="duration">Trip Duration *</label>
+            <select id="duration" name="duration" required>
               <option value="">— Select —</option>
               <option>7 nights</option>
               <option>8 nights</option>
@@ -247,15 +247,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label for="guests">Number of Guests</label>
-            <select id="guests" name="guests">
+            <label for="guests">Number of Guests *</label>
+            <select id="guests" name="guests" required>
               <option value="">— Select —</option>
               <option>1</option><option>2</option><option>3–4</option><option>5+</option>
             </select>
           </div>
           <div class="form-group">
-            <label for="budget">Budget per person (CAD)</label>
-            <select id="budget" name="budget">
+            <label for="budget">Budget per person (CAD) *</label>
+            <select id="budget" name="budget" required>
               <option value="">— Select —</option>
               <option>Flexible</option>
               <option>$12,000+</option>
@@ -340,7 +340,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   })();
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
-    form.addEventListener('submit', function() {
+    form.addEventListener('submit', function(e) {
+      if (form.dataset.submitted) { e.preventDefault(); return; }
+      var phoneEl = form.querySelector('#phone');
+      if (phoneEl) {
+        var pv = phoneEl.value.replace(/\s+/g, '');
+        if (pv && (phoneEl.dataset.phoneInvalid || pv.length < 6)) {
+          e.preventDefault();
+          phoneEl.focus();
+          return;
+        }
+      }
+      form.dataset.submitted = 'true';
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
       var val = function(n) { var el = form.querySelector('[name="'+n+'"]'); return el ? el.value : ''; };
       var loadTs = parseInt(val('page_load_time') || '0');
       var timeOnPage = loadTs ? Math.round((Date.now() - loadTs) / 1000) : 0;
@@ -378,6 +391,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
+<script src="/assets/js/phone-validate.js"></script>
 </body>
 </html>
   

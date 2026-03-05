@@ -47,7 +47,8 @@ $time_on_page       = (int)($_POST['time_on_page']       ?? 0);
 $honeypot           = trim($_POST['website']             ?? '');
 
 // Basic validation
-if (empty($first_name) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (empty($first_name) || !filter_var($email, FILTER_VALIDATE_EMAIL)
+    || empty($travel_date) || empty($duration) || empty($budget) || empty($guests) || empty($operator)) {
     header('Location: ' . $ERROR_URL);
     exit;
 }

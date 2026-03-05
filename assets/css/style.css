@@ -535,6 +535,33 @@ ul { list-style: none; }
 .step h3 { font-size: 1rem; color: var(--navy); margin-bottom: 6px; }
 .step p { font-size: 14px; color: var(--mid); }
 
+/* === Phone Validation States === */
+.phone-error {
+  color: #d32f2f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.phone-valid {
+  color: #2e7d32;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.phone-valid::before {
+  content: '\2714 ';
+}
+.form-group.has-error input {
+  border-color: #d32f2f;
+}
+.form-group.has-error input:focus {
+  box-shadow: 0 0 0 3px rgba(211,47,47,0.15);
+}
+.form-group.has-success input {
+  border-color: #2e7d32;
+}
+.form-group.has-success input:focus {
+  box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+}
+
 /* === Responsive === */
 @media (max-width: 900px) {
   .brand-intro-inner { grid-template-columns: 1fr; gap: 32px; }
