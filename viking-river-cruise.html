@@ -333,15 +333,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   document.querySelectorAll('form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
       if (form.dataset.submitted) { e.preventDefault(); return; }
-      var phoneEl = form.querySelector('#phone');
-      if (phoneEl) {
-        var pv = phoneEl.value.replace(/\s+/g, '');
-        if (pv && (phoneEl.dataset.phoneInvalid || pv.length < 6)) {
-          e.preventDefault();
-          phoneEl.focus();
-          return;
-        }
-      }
       form.dataset.submitted = 'true';
       var btn = form.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
@@ -382,7 +373,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
-<script src="/assets/js/phone-validate.js"></script>
+<!-- phone-validate.js disabled temporarily -->
 </body>
 </html>
   
