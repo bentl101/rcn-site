@@ -353,6 +353,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (loadInput) loadInput.value = Date.now().toString();
     });
   })();
+  // Form start event — fires once per page when user first interacts with form
+  (function() {
+    var fired = false;
+    document.querySelectorAll('form input, form select, form textarea').forEach(function(el) {
+      el.addEventListener('focus', function() {
+        if (fired) return;
+        fired = true;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'event': 'form_start', 'form_page': document.title });
+      }, { once: true });
+    });
+  })();
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
@@ -397,7 +409,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
-
+<!-- phone-validate.js disabled temporarily -->
 </body>
 </html>
   

@@ -47,7 +47,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </header>
 
 <!-- ══ HERO ════════════════════════════════════════════════════════════════ -->
-<section class="hero" style="background-image:url('images/cruise-min.jpg')">
+<section class="hero" style="background-image:url('https://rivercruisenetworkcom.swipepages.media/2023/1/63c6bd12ef37290011081082/cruise-min.jpg')">
   <div class="hero-content">
     <span class="hero-eyebrow">Exclusive Offers 2026 / 2027</span>
     <h1>Discover the World's Most Beautiful Rivers</h1>
@@ -367,21 +367,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
   });
+  // Form start event — fires once per page when user first interacts with form
+  (function() {
+    var fired = false;
+    document.querySelectorAll('form input, form select, form textarea').forEach(function(el) {
+      el.addEventListener('focus', function() {
+        if (fired) return;
+        fired = true;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'event': 'form_start', 'form_page': document.title });
+      }, { once: true });
+    });
+  })();
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
       // Block double-submit
       if (form.dataset.submitted) { e.preventDefault(); return; }
-      // Block if phone invalid or too short
-      var phoneEl = form.querySelector('#phone');
-      if (phoneEl) {
-        var pv = phoneEl.value.replace(/\s+/g, '');
-        if (pv && (phoneEl.dataset.phoneInvalid || pv.length < 6)) {
-          e.preventDefault();
-          phoneEl.focus();
-          return;
-        }
-      }
       form.dataset.submitted = 'true';
       var btn = form.querySelector('button[type="submit"]');
       if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
@@ -422,7 +424,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
-<script src="/assets/js/phone-validate.js"></script>
+<!-- phone-validate.js disabled temporarily -->
 </body>
 </html>
   

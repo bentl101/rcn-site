@@ -43,7 +43,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </header>
 
-<section class="hero" style="background-image:url('images/viking-hero.jpg')">
+<section class="hero" style="background-image:url('https://rivercruisenetworkcom.swipepages.media/2023/1/63c6bd12ef37290011081082/pexels-tom-fisk-10693671---new-min-1500.jpg')">
   <div class="hero-content">
     <span class="hero-eyebrow">Viking River Cruises — Special Offers</span>
     <h1>Curious Travellers, Immersive Destinations</h1>
@@ -317,6 +317,18 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       if (loadInput) loadInput.value = Date.now().toString();
     });
   })();
+  // Form start event — fires once per page when user first interacts with form
+  (function() {
+    var fired = false;
+    document.querySelectorAll('form input, form select, form textarea').forEach(function(el) {
+      el.addEventListener('focus', function() {
+        if (fired) return;
+        fired = true;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ 'event': 'form_start', 'form_page': document.title });
+      }, { once: true });
+    });
+  })();
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
@@ -361,7 +373,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   });
 </script>
-
+<!-- phone-validate.js disabled temporarily -->
 </body>
 </html>
   

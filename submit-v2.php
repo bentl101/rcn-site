@@ -64,6 +64,19 @@ if (!empty($honeypot) || $time_on_page < 2) {
 
 $full_name = trim("$first_name $last_name");
 
+// ── Redirect immediately, then process in background ────────────────────────
+ignore_user_abort(true);
+header('Location: ' . $THANK_YOU_URL);
+header('Connection: close');
+header('Content-Length: 0');
+ob_end_flush();
+flush();
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+}
+
+// ── Everything below runs after the user has been redirected ─────────────────
+
 // ── Forward to n8n Webhook ──────────────────────────────────────────────────
 $lead_payload = json_encode([
     'first_name'      => $first_name,
@@ -103,11 +116,38 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
     CURLOPT_TIMEOUT        => 10,
 ]);
-curl_exec($ch);
+$n8n_response = curl_exec($ch);
+$n8n_http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$n8n_error = curl_error($ch);
 curl_close($ch);
 
+// ── CSV Lead Log (independent of n8n) ───────────────────────────────────────
+$csv_file = __DIR__ . '/leads.csv';
+$csv_exists = file_exists($csv_file);
+$fp = fopen($csv_file, 'a');
+if ($fp) {
+    if (!$csv_exists) {
+        fputcsv($fp, [
+            'submitted_at','first_name','last_name','email','phone',
+            'destination','travel_date','duration','budget','guests','operator',
+            'additional_info','page_source','utm_source','utm_medium','utm_campaign',
+            'click_id','click_id_type','device_type','landing_page','referrer',
+            'time_on_page','ip_address','n8n_status','n8n_error'
+        ]);
+    }
+    fputcsv($fp, [
+        date('Y-m-d H:i:s'), $first_name, $last_name, $email, $phone,
+        $destination, $travel_date, $duration, $budget, $guests, $operator,
+        $additional_info, $page_source, $utm_source, $utm_medium, $utm_campaign,
+        $click_id, $click_id_type, $device_type, $landing_page, $referrer,
+        $time_on_page, $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        $n8n_http_code, $n8n_error
+    ]);
+    fclose($fp);
+}
+
 // ── Email Notification (backup) ─────────────────────────────────────────────
-$subject = "New River Cruise Enquiry — {$full_name}";
+$subject = "{$budget} · {$operator} · {$full_name} · RCN Lead";
 
 $body  = "New lead from {$SITE_NAME}\n";
 $body .= str_repeat('─', 50) . "\n\n";
@@ -141,7 +181,3 @@ $headers .= "Reply-To: {$email}\r\n";
 $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
 mail($RECIPIENT_EMAIL, $subject, $body, $headers);
-
-// ── Redirect ──────────────────────────────────────────────────────────────────
-header('Location: ' . $THANK_YOU_URL);
-exit;

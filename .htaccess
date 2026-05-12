@@ -1,0 +1,4 @@
+# Block public access to CSV lead log
+<Files "leads.csv">
+    Require all denied
+</Files>
