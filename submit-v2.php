@@ -64,19 +64,6 @@ if (!empty($honeypot) || $time_on_page < 2) {
 
 $full_name = trim("$first_name $last_name");
 
-// ── Redirect immediately, then process in background ────────────────────────
-ignore_user_abort(true);
-header('Location: ' . $THANK_YOU_URL);
-header('Connection: close');
-header('Content-Length: 0');
-ob_end_flush();
-flush();
-if (function_exists('fastcgi_finish_request')) {
-    fastcgi_finish_request();
-}
-
-// ── Everything below runs after the user has been redirected ─────────────────
-
 // ── Forward to n8n Webhook ──────────────────────────────────────────────────
 $lead_payload = json_encode([
     'first_name'      => $first_name,
@@ -147,7 +134,7 @@ if ($fp) {
 }
 
 // ── Email Notification (backup) ─────────────────────────────────────────────
-$subject = "{$budget} · {$operator} · {$full_name} · RCN Lead";
+$subject = "New River Cruise Enquiry — {$full_name}";
 
 $body  = "New lead from {$SITE_NAME}\n";
 $body .= str_repeat('─', 50) . "\n\n";
@@ -181,3 +168,7 @@ $headers .= "Reply-To: {$email}\r\n";
 $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
 mail($RECIPIENT_EMAIL, $subject, $body, $headers);
+
+// ── Redirect ──────────────────────────────────────────────────────────────────
+header('Location: ' . $THANK_YOU_URL);
+exit;
