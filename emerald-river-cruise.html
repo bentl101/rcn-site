@@ -329,6 +329,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       }, { once: true });
     });
   })();
+  // Same-session re-submit UX: show friendly banner if user already submitted
+  if (sessionStorage.getItem('rcn_submitted')) {
+    document.querySelectorAll('form').forEach(function(form) {
+      var banner = document.createElement('div');
+      banner.style.cssText = 'background:#e8f7f8;border-left:4px solid #2DBDC5;color:#1A2B3D;padding:14px 16px;margin:0 0 20px;border-radius:6px;font-size:15px;line-height:1.5;';
+      banner.innerHTML = '<strong>Thanks - we\'ve got your details.</strong> Your specialist will be in touch within 24 hours. Feel free to send anything else you\'d like us to know below.';
+      form.parentNode.insertBefore(banner, form);
+      var submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.textContent = 'Send additional details';
+    });
+  }
   // GTM form submission event — all fields + enhanced conversions
   document.querySelectorAll('form').forEach(function(form) {
     form.addEventListener('submit', function(e) {
@@ -341,14 +352,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       var timeOnPage = loadTs ? Math.round((Date.now() - loadTs) / 1000) : 0;
       var topInput = form.querySelector('[name="time_on_page"]');
       if (topInput) topInput.value = timeOnPage;
+      var leadOrderId = 'RCN-' + (function(d){var p=function(n){return String(n).padStart(2,'0');};return d.getUTCFullYear()+p(d.getUTCMonth()+1)+p(d.getUTCDate())+'-'+p(d.getUTCHours())+p(d.getUTCMinutes())+p(d.getUTCSeconds());})(new Date()) + '-' + Array.from(crypto.getRandomValues(new Uint8Array(4))).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+      var hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.name = 'lead_order_id';
+      hidden.value = leadOrderId;
+      form.appendChild(hidden);
+      sessionStorage.setItem('lead_order_id', leadOrderId);
       sessionStorage.setItem('lead_email', val('email'));
       sessionStorage.setItem('lead_phone', val('phone'));
       sessionStorage.setItem('lead_first_name', val('first_name'));
       sessionStorage.setItem('lead_last_name', val('last_name'));
+      sessionStorage.setItem('rcn_submitted', '1');
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         'event': 'form_submission',
         'form_page': document.title,
+        'lead_order_id': leadOrderId,
         'form_first_name': val('first_name'),
         'form_last_name': val('last_name'),
         'form_email': val('email'),

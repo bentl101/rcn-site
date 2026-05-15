@@ -48,6 +48,10 @@ $landing_page       = filter_var(trim($_POST['landing_page'] ?? ''), FILTER_SANI
 $referrer           = filter_var(trim($_POST['referrer']    ?? ''), FILTER_SANITIZE_URL);
 $time_on_page       = (int)($_POST['time_on_page']       ?? 0);
 $honeypot           = trim($_POST['website']             ?? '');
+$lead_order_id      = clean($_POST['lead_order_id']      ?? '');
+if (empty($lead_order_id)) {
+    $lead_order_id = 'RCN-' . date('Ymd-His') . '-' . bin2hex(random_bytes(4));
+}
 
 // Basic validation
 if (empty($first_name) || !filter_var($email, FILTER_VALIDATE_EMAIL)
@@ -66,6 +70,7 @@ $full_name = trim("$first_name $last_name");
 
 // ── Forward to n8n Webhook ──────────────────────────────────────────────────
 $lead_payload = json_encode([
+    'lead_order_id'   => $lead_order_id,
     'first_name'      => $first_name,
     'last_name'       => $last_name,
     'name'            => $full_name,
@@ -115,7 +120,7 @@ $fp = fopen($csv_file, 'a');
 if ($fp) {
     if (!$csv_exists) {
         fputcsv($fp, [
-            'submitted_at','first_name','last_name','email','phone',
+            'submitted_at','lead_order_id','first_name','last_name','email','phone',
             'destination','travel_date','duration','budget','guests','operator',
             'additional_info','page_source','utm_source','utm_medium','utm_campaign',
             'click_id','click_id_type','device_type','landing_page','referrer',
@@ -123,7 +128,7 @@ if ($fp) {
         ]);
     }
     fputcsv($fp, [
-        date('Y-m-d H:i:s'), $first_name, $last_name, $email, $phone,
+        date('Y-m-d H:i:s'), $lead_order_id, $first_name, $last_name, $email, $phone,
         $destination, $travel_date, $duration, $budget, $guests, $operator,
         $additional_info, $page_source, $utm_source, $utm_medium, $utm_campaign,
         $click_id, $click_id_type, $device_type, $landing_page, $referrer,
@@ -134,10 +139,11 @@ if ($fp) {
 }
 
 // ── Email Notification (backup) ─────────────────────────────────────────────
-$subject = "New River Cruise Enquiry — {$full_name}";
+$subject = "New RCN lead — {$full_name}";
 
 $body  = "New lead from {$SITE_NAME}\n";
 $body .= str_repeat('─', 50) . "\n\n";
+$body .= "Lead Order ID:      {$lead_order_id}\n";
 $body .= "Name:               {$full_name}\n";
 $body .= "Email:              {$email}\n";
 $body .= "Phone:              {$phone}\n\n";
