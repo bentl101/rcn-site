@@ -580,3 +580,19 @@ ul { list-style: none; }
   .footer-bottom { flex-direction: column; text-align: center; }
   .form-box { padding: 24px 20px; }
 }
+
+/* === Mobile tap-target fixes (2026-05-15) — Apple HIG 44px min === */
+.btn { min-height: 44px; line-height: 1.2; display: inline-flex; align-items: center; justify-content: center; }
+.brand-card .btn { font-size: 14px; padding: 12px 20px; min-height: 44px; }
+.brand-card { padding: 20px 16px; }
+.form-group input,
+.form-group select,
+.form-group textarea { padding: 12px 14px; font-size: 16px; min-height: 44px; }
+.form-group textarea { min-height: 96px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { font-size: 13px; margin-bottom: 6px; }
+.form-submit .btn { padding: 16px; font-size: 17px; min-height: 52px; }
+.main-nav a { padding: 12px 14px; display: inline-block; }
+.header-phone a { padding: 8px 6px; display: inline-block; }
+.offer-card { position: relative; }
+.offer-card .btn { width: 100%; min-height: 48px; }
