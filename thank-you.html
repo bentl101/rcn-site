@@ -140,14 +140,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   document.getElementById('hamburger').addEventListener('click', function() {
     document.getElementById('mainNav').classList.toggle('open');
   });
-  // Only fire conversion events if a form was actually submitted
+  // Conversion strategy:
+  //   1) Main "Submit Lead Form" conversion is fired SERVER-SIDE by n8n only when
+  //      DeepSeek scores the lead >= 75 AND a click_id is present.
+  //   2) LEGACY "Legacy submit lead form" conversion is fired CLIENT-SIDE here
+  //      on every form completion (no scoring gate) as a baseline. Lets us
+  //      compare in Google Ads UI: legacy = all form completions, main = scored.
   var leadEmail = sessionStorage.getItem('lead_email');
   if (leadEmail) {
     var leadPhone = sessionStorage.getItem('lead_phone') || '';
     var leadFirst = sessionStorage.getItem('lead_first_name') || '';
     var leadLast = sessionStorage.getItem('lead_last_name') || '';
     var leadOrderId = sessionStorage.getItem('lead_order_id') || '';
-    // GTM dataLayer event
+
+    // GTM analytics event (fires always)
     window.dataLayer = window.dataLayer || [];
     window.dataLayer.push({
       'event': 'lead_form_complete',
@@ -160,7 +166,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         'last_name': leadLast
       }
     });
-    // Load gtag.js and fire single Google Ads conversion
+
+    // Legacy baseline Ads conversion — fires for every form completion.
+    // transaction_id (lead_order_id) ensures de-dup on refresh.
     var s = document.createElement('script');
     s.src = 'https://www.googletagmanager.com/gtag/js?id=AW-10929471967';
     s.async = true;
@@ -173,12 +181,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         'address': { 'first_name': leadFirst, 'last_name': leadLast }
       });
       gtag('event', 'conversion', {
-        'send_to': 'AW-10929471967/wiFkCM3XupwYEN-Dytso',
+        'send_to': 'AW-10929471967/wib4COjkqbQcEN-Dytso',
+        'value': 10.0,
+        'currency': 'CAD',
         'transaction_id': leadOrderId
       });
     };
     document.head.appendChild(s);
-    // Clean up so refreshing the page doesn't fire again
+
+    // Clean up sessionStorage so refresh doesn't re-fire
     ['lead_email','lead_phone','lead_first_name','lead_last_name','lead_order_id'].forEach(function(k) {
       sessionStorage.removeItem(k);
     });
