@@ -451,20 +451,19 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- phone-validate.js disabled temporarily -->
 
 <script>
-  // travel_date spam trap: pre-fill the picker with LAST month (a past date).
-  // Genuine enquirers notice and pick their real FUTURE travel month. Low-intent
-  // / spam submitters blindly leave the default past month, which the server
-  // scorer treats as a strong red flag (months_until_travel < 0 -> hard cap).
-  // Deliberately NO future `min`: the past value must be allowed to submit so it
-  // reaches the scorer as a signal (a future min would block it instead).
+  // travel_date soft signal: pre-fill the picker with THIS month. A blind /
+  // low-intent submitter leaves "now" as the travel date, which the scorer reads
+  // as months_until_travel = 0 (a WEAK late-booker nudge) rather than a past date
+  // (which hard-caps to invalid and was wrongly flagging genuine enquirers).
+  // Real enquirers still change it to their actual future travel month.
+  // No future `min`, so the prefilled value always submits.
   document.addEventListener("DOMContentLoaded", function() {
     var pad = function(n) { return String(n).padStart(2, "0"); };
     var d = new Date();
-    var lastMonth = (d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear())
-                    + "-" + pad(d.getMonth() === 0 ? 12 : d.getMonth());
+    var thisMonth = d.getFullYear() + "-" + pad(d.getMonth() + 1);
     document.querySelectorAll('input[type="month"]').forEach(function(el) {
       el.removeAttribute('min');
-      el.value = lastMonth;
+      el.value = thisMonth;
     });
   });
 </script>
