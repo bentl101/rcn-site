@@ -221,7 +221,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="form-row">
           <div class="form-group">
             <label for="travel_date">Preferred Travel Date *</label>
-            <input type="month" id="travel_date" name="travel_date" min="2026-07" required>
+            <input type="month" id="travel_date" name="travel_date" required>
           </div>
           <div class="form-group">
             <label for="duration">Duration *</label>
@@ -451,18 +451,20 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- phone-validate.js disabled temporarily -->
 
 <script>
-  // Set the travel-date picker's minimum to next month on page load, so the
-  // preferred travel date can't be a past month. Replaces the old hardcoded
-  // min and the removed last-month value trap (which, with min=next-month, would
-  // fail browser range-validation and silently block real submissions).
+  // travel_date spam trap: pre-fill the picker with LAST month (a past date).
+  // Genuine enquirers notice and pick their real FUTURE travel month. Low-intent
+  // / spam submitters blindly leave the default past month, which the server
+  // scorer treats as a strong red flag (months_until_travel < 0 -> hard cap).
+  // Deliberately NO future `min`: the past value must be allowed to submit so it
+  // reaches the scorer as a signal (a future min would block it instead).
   document.addEventListener("DOMContentLoaded", function() {
+    var pad = function(n) { return String(n).padStart(2, "0"); };
     var d = new Date();
-    var y = d.getFullYear();
-    var m = d.getMonth() + 2; // 1-indexed next month
-    if (m > 12) { m -= 12; y += 1; }
-    var nextMonth = y + "-" + String(m).padStart(2, "0");
+    var lastMonth = (d.getMonth() === 0 ? d.getFullYear() - 1 : d.getFullYear())
+                    + "-" + pad(d.getMonth() === 0 ? 12 : d.getMonth());
     document.querySelectorAll('input[type="month"]').forEach(function(el) {
-      el.min = nextMonth;
+      el.removeAttribute('min');
+      el.value = lastMonth;
     });
   });
 </script>
