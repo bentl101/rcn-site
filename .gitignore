@@ -5,6 +5,12 @@ Thumbs.db
 # Environment / secrets
 .env
 .env.*
+rcn-secrets.php
+*.secret.php
+
+# Lead data (PII) — never commit
+leads.csv
+leads-*.csv
 
 # Node
 node_modules/

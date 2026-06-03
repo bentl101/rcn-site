@@ -1,4 +1,18 @@
-# Block public access to CSV lead log
-<Files "leads.csv">
+# ── River Cruise Network — book.rivercruisenetwork.com ───────────────────────
+
+# Block public access to lead logs and any future CSV exports (PII).
+<FilesMatch "\.csv$">
     Require all denied
-</Files>
+</FilesMatch>
+
+# Protect server-side secret includes. PHP never serves these as source while
+# the interpreter is healthy; this is defense-in-depth for a misconfigured
+# server that might otherwise hand out the raw file.
+<FilesMatch "^(rcn-secrets|.*\.secret)\.php$">
+    Require all denied
+</FilesMatch>
+
+# Block the dev/mockup copy from the public and from search engines. The files
+# may still exist on disk, but every /mockup/* URL returns 404 (so the mockup
+# forms can't be loaded and can't POST to the live handler).
+RedirectMatch 404 ^/mockup(/.*)?$

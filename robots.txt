@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /mockup/
+Disallow: /submit.php
+Disallow: /submit-v2.php
+Disallow: /verify-phone.php
+Disallow: /thank-you.html
+
+Sitemap: https://book.rivercruisenetwork.com/sitemap.xml

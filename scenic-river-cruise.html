@@ -43,7 +43,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
 </header>
 
-<section class="hero" style="background-image:url('images/scenic-min-1500.webp')">
+<section class="hero" style="background-image:url('images/sc-suite-balcony-amber1-rqt6lt-1500.webp')">
   <div class="hero-content">
     <span class="hero-eyebrow">Scenic — Special Offers</span>
     <h1>All-Inclusive Luxury on Europe's Legendary Rivers</h1>
@@ -162,6 +162,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="hidden" name="device_type" value="">
         <input type="hidden" name="landing_page" value="">
         <input type="hidden" name="referrer" value="">
+        <input type="hidden" name="browser_language" value="">
         <input type="hidden" name="page_load_time" value="">
         <input type="hidden" name="time_on_page" value="">
         <!-- Honeypot — leave blank -->
@@ -196,7 +197,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="form-row">
           <div class="form-group">
             <label for="travel_date">Preferred Travel Date *</label>
-            <input type="month" id="travel_date" name="travel_date" min="2026-03" required>
+            <input type="month" id="travel_date" name="travel_date" min="2026-07" required>
           </div>
           <div class="form-group">
             <label for="duration">Trip Duration *</label>
@@ -304,6 +305,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     var deviceType = /Mobi|Android.*Mobile|iPhone|iPod/.test(ua) ? 'Mobile'
       : /iPad|Android(?!.*Mobile)|Tablet/.test(ua) ? 'Tablet' : 'Desktop';
     if (!sessionStorage.getItem('landing_page')) sessionStorage.setItem('landing_page', window.location.href);
+    if (!sessionStorage.getItem('orig_referrer')) sessionStorage.setItem('orig_referrer', document.referrer || 'direct');
     document.querySelectorAll('form').forEach(function(form) {
       utmKeys.concat(['click_id','click_id_type','landing_page']).forEach(function(k) {
         var input = form.querySelector('input[name="'+k+'"]');
@@ -311,8 +313,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       });
       var dtInput = form.querySelector('input[name="device_type"]');
       if (dtInput) dtInput.value = deviceType;
+      var langInput = form.querySelector('input[name="browser_language"]');
+      if (langInput) langInput.value = navigator.language || '';
       var refInput = form.querySelector('input[name="referrer"]');
-      if (refInput) refInput.value = document.referrer || 'direct';
+      if (refInput) refInput.value = sessionStorage.getItem('orig_referrer') || document.referrer || 'direct';
       var loadInput = form.querySelector('input[name="page_load_time"]');
       if (loadInput) loadInput.value = Date.now().toString();
     });
@@ -394,5 +398,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   });
 </script>
 <!-- phone-validate.js disabled temporarily -->
+
+<script>
+  // Set the travel-date picker's minimum to next month on page load, so the
+  // preferred travel date can't be a past month. Replaces the old hardcoded
+  // min and the removed last-month value trap (which, with min=next-month, would
+  // fail browser range-validation and silently block real submissions).
+  document.addEventListener("DOMContentLoaded", function() {
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = d.getMonth() + 2; // 1-indexed next month
+    if (m > 12) { m -= 12; y += 1; }
+    var nextMonth = y + "-" + String(m).padStart(2, "0");
+    document.querySelectorAll('input[type="month"]').forEach(function(el) {
+      el.min = nextMonth;
+    });
+  });
+</script>
 </body>
 </html>

@@ -5,7 +5,9 @@
  */
 
 // ── Config ──────────────────────────────────────────────────────────────────
-$VERIPHONE_API_KEY = 'B67FDB84914547B9AB64AD76ECF2036F';
+// API key loaded from the untracked rcn-secrets.php (see that file to rotate).
+$RCN_SECRETS       = is_file(__DIR__ . '/rcn-secrets.php') ? (include __DIR__ . '/rcn-secrets.php') : [];
+$VERIPHONE_API_KEY = $RCN_SECRETS['VERIPHONE_API_KEY'] ?? (getenv('VERIPHONE_API_KEY') ?: '');
 // ────────────────────────────────────────────────────────────────────────────
 
 header('Content-Type: application/json');
