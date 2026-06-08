@@ -199,6 +199,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="hidden" name="landing_page" value="">
         <input type="hidden" name="referrer" value="">
         <input type="hidden" name="browser_language" value="">
+        <input type="hidden" name="utm_id" value="">
+        <input type="hidden" name="matchtype" value="">
+        <input type="hidden" name="device" value="">
+        <input type="hidden" name="network" value="">
+        <input type="hidden" name="adgroupid" value="">
+        <input type="hidden" name="targetid" value="">
+        <input type="hidden" name="loc_physical" value="">
+        <input type="hidden" name="loc_interest" value="">
         <input type="hidden" name="page_load_time" value="">
         <input type="hidden" name="time_on_page" value="">
         <!-- Honeypot — leave blank -->
@@ -324,39 +332,121 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   document.getElementById('hamburger').addEventListener('click', function() {
     document.getElementById('mainNav').classList.toggle('open');
   });
-  // UTM & landing page tracking
+  // Attribution tracking — three-layer first-touch resolver.
+  // Layer order: 1st-party cookie > sessionStorage > current URL params.
+  // Survives in-app browser sessionStorage wipes (e.g. Facebook/Instagram
+  // WebView clears sessionStorage on cross-page navigation).
   (function() {
-    var params = new URLSearchParams(window.location.search);
-    var utmKeys = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'];
-    utmKeys.forEach(function(k) { var v = params.get(k); if (v) sessionStorage.setItem(k, v); });
-    var clickIdParams = ['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'];
-    clickIdParams.forEach(function(k) {
-      var v = params.get(k);
-      if (v && !sessionStorage.getItem('click_id')) {
-        sessionStorage.setItem('click_id', v);
-        sessionStorage.setItem('click_id_type', k);
-      }
-    });
+    var COOKIE_NAME = 'rcn_attr';
+    var COOKIE_DAYS = 90;   // matches Google Ads 90-day click lookback
+
+    // Keys we track
+    var UTM_KEYS  = ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','utm_id'];
+    var VT_KEYS   = ['matchtype','device','network','adgroupid','targetid','loc_physical','loc_interest'];
+    var ATTR_KEYS = UTM_KEYS.concat(VT_KEYS).concat(['click_id','click_id_type','landing_page','orig_referrer']);
+    var CLICK_PARAMS = ['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'];
+
+    function readCookie() {
+      var m = document.cookie.match('(?:^|; )' + COOKIE_NAME + '=([^;]*)');
+      try { return m ? JSON.parse(decodeURIComponent(m[1])) : {}; } catch(e) { return {}; }
+    }
+    function writeCookie(obj) {
+      var d = new Date(); d.setTime(d.getTime() + COOKIE_DAYS * 86400000);
+      document.cookie = COOKIE_NAME + '=' + encodeURIComponent(JSON.stringify(obj))
+        + '; path=/; expires=' + d.toUTCString() + '; SameSite=Lax';
+    }
+    function readSS() {
+      var out = {};
+      ATTR_KEYS.forEach(function(k) { var v = sessionStorage.getItem(k); if (v) out[k] = v; });
+      return out;
+    }
+    function writeSS(obj) {
+      Object.keys(obj).forEach(function(k) { if (obj[k]) sessionStorage.setItem(k, obj[k]); });
+    }
+
+    // Parse tracking params from a URL string (or query string fragment).
+    function parseTracking(urlStr) {
+      var out = {};
+      try {
+        var q = urlStr.indexOf('?') >= 0 ? urlStr.slice(urlStr.indexOf('?')) : urlStr;
+        var p = new URLSearchParams(q);
+        UTM_KEYS.concat(VT_KEYS).forEach(function(k) { var v = p.get(k); if (v) out[k] = v; });
+        for (var i = 0; i < CLICK_PARAMS.length; i++) {
+          var v = p.get(CLICK_PARAMS[i]);
+          if (v) { out['click_id'] = v; out['click_id_type'] = CLICK_PARAMS[i]; break; }
+        }
+      } catch(e) {}
+      return out;
+    }
+
+    // Merge sources: later keys win only if not already set.
+    function merge(base, overlay) {
+      var out = {}; Object.assign(out, overlay);
+      Object.keys(base).forEach(function(k) { if (!out[k]) out[k] = base[k]; });
+      return out;
+    }
+
+    // Device type (UA-derived) — unchanged from prior impl
     var ua = navigator.userAgent;
     var deviceType = /Mobi|Android.*Mobile|iPhone|iPod/.test(ua) ? 'Mobile'
       : /iPad|Android(?!.*Mobile)|Tablet/.test(ua) ? 'Tablet' : 'Desktop';
-    if (!sessionStorage.getItem('landing_page')) sessionStorage.setItem('landing_page', window.location.href);
-    if (!sessionStorage.getItem('orig_referrer')) sessionStorage.setItem('orig_referrer', document.referrer || 'direct');
+
+    // ── Resolution: cookie (most durable) → sessionStorage → current URL ──
+    var fromCookie = readCookie();
+    var fromSS     = readSS();
+    var fromURL    = parseTracking(window.location.search);
+
+    // Defaults for first-touch fields
+    if (!fromURL['landing_page'])   fromURL['landing_page']  = window.location.href;
+    if (!fromURL['orig_referrer'])  fromURL['orig_referrer'] = document.referrer || 'direct';
+
+    // Merge: URL is least durable (overwritten per page), cookie is most durable.
+    // We want first-touch, so cookie wins over sessionStorage wins over URL.
+    var resolved = merge(fromCookie, merge(fromSS, fromURL));
+
+    // ── Referrer fallback: recover click_id lost in storage wipe ─────────────
+    // If click_id is still empty AND document.referrer is same-origin AND
+    // carries tracking params, treat that referrer as the real landing page.
+    if (!resolved['click_id'] && document.referrer) {
+      try {
+        var ref = new URL(document.referrer);
+        if (ref.hostname === window.location.hostname && ref.search) {
+          var fromRef = parseTracking(ref.search);
+          if (fromRef['click_id']) {
+            // The referrer IS the real landing page (storage was wiped mid-journey)
+            fromRef['landing_page'] = document.referrer;
+            if (!fromRef['orig_referrer']) fromRef['orig_referrer'] = document.referrer;
+            resolved = merge(resolved, fromRef);  // fromRef wins on conflicting keys
+          }
+        }
+      } catch(e) {}
+    }
+
+    // ── Persist merged state back to both stores ──────────────────────────────
+    writeCookie(resolved);
+    writeSS(resolved);
+
+    // ── Populate all form hidden inputs ───────────────────────────────────────
     document.querySelectorAll('form').forEach(function(form) {
-      utmKeys.concat(['click_id','click_id_type','landing_page']).forEach(function(k) {
-        var input = form.querySelector('input[name="'+k+'"]');
-        if (input) input.value = sessionStorage.getItem(k) || '';
+      ATTR_KEYS.forEach(function(k) {
+        var input = form.querySelector('input[name="' + k + '"]');
+        if (input) input.value = resolved[k] || '';
       });
+      // device_type: UA-derived, not stored in attribution cookie
       var dtInput = form.querySelector('input[name="device_type"]');
       if (dtInput) dtInput.value = deviceType;
+      // browser_language
       var langInput = form.querySelector('input[name="browser_language"]');
       if (langInput) langInput.value = navigator.language || '';
+      // referrer hidden field = resolved orig_referrer
       var refInput = form.querySelector('input[name="referrer"]');
-      if (refInput) refInput.value = sessionStorage.getItem('orig_referrer') || document.referrer || 'direct';
+      if (refInput) refInput.value = resolved['orig_referrer'] || document.referrer || 'direct';
+      // page_load_time
       var loadInput = form.querySelector('input[name="page_load_time"]');
       if (loadInput) loadInput.value = Date.now().toString();
     });
   })();
+  // Smooth scroll
   // Form start event — fires once per page when user first interacts with form
   (function() {
     var fired = false;

@@ -84,6 +84,15 @@ $browser_language   = clean_text($_POST['browser_language']  ?? '');
 $user_agent         = $_SERVER['HTTP_USER_AGENT']            ?? '';
 $landing_page       = filter_var(trim($_POST['landing_page'] ?? ''), FILTER_SANITIZE_URL);
 $referrer           = filter_var(trim($_POST['referrer']     ?? ''), FILTER_SANITIZE_URL);
+// New ValueTrack params
+$utm_id             = clean_text($_POST['utm_id']            ?? '');
+$matchtype          = clean_text($_POST['matchtype']         ?? '');
+$gad_device         = clean_text($_POST['device']            ?? '');  // Google's m/t/c (not to be confused with device_type)
+$network            = clean_text($_POST['network']           ?? '');
+$adgroupid          = clean_text($_POST['adgroupid']         ?? '');
+$targetid           = clean_text($_POST['targetid']          ?? '');
+$loc_physical       = clean_text($_POST['loc_physical']      ?? '');
+$loc_interest       = clean_text($_POST['loc_interest']      ?? '');
 $time_on_page       = (int)($_POST['time_on_page']           ?? 0);
 $honeypot           = trim($_POST['website']                 ?? '');  // signal, not a gate
 $lead_order_id      = clean_text($_POST['lead_order_id']     ?? '');
@@ -91,6 +100,41 @@ if (empty($lead_order_id)) {
     $lead_order_id = 'RCN-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(4));
 }
 $submitted_at       = gmdate('Y-m-d H:i:s');
+
+// Server-side referrer fallback: if the JS attribution cookie/sessionStorage was
+// wiped mid-journey (e.g. Facebook in-app browser), try to recover click_id,
+// UTMs, and ValueTrack params from the referrer URL's query string.
+if ($click_id === '' && $referrer !== '' && strpos($referrer, '?') !== false) {
+    $ref_query = parse_url($referrer, PHP_URL_QUERY) ?? '';
+    if ($ref_query) {
+        $ref_params = [];
+        parse_str($ref_query, $ref_params);
+        foreach (['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'] as $ck) {
+            if (!empty($ref_params[$ck])) {
+                $click_id      = clean_text($ref_params[$ck]);
+                $click_id_type = $ck;
+                break;
+            }
+        }
+        if ($click_id !== '') {
+            // Backfill empty attribution fields from the referrer
+            foreach (['utm_source','utm_medium','utm_campaign','utm_term','utm_content',
+                      'utm_id','matchtype','network','adgroupid','targetid',
+                      'loc_physical','loc_interest'] as $k) {
+                if (isset($ref_params[$k]) && $$k === '') {
+                    $$k = clean_text($ref_params[$k]);
+                }
+            }
+            if (!empty($ref_params['device']) && $gad_device === '') {
+                $gad_device = clean_text($ref_params['device']);
+            }
+            // The referrer IS the real landing page when storage was wiped
+            if ($landing_page === '' || strpos($landing_page, '?') === false) {
+                $landing_page = filter_var($referrer, FILTER_SANITIZE_URL);
+            }
+        }
+    }
+}
 $ip_address         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 // Enhanced-conversion hashes (computed once, used by n8n upload + sheet writes)
@@ -119,7 +163,8 @@ $csv_header = [
     'additional_info','page_source','utm_source','utm_medium','utm_campaign',
     'utm_term','utm_content','click_id','click_id_type','device_type',
     'landing_page','referrer','time_on_page','honeypot_filled','ip_address',
-    'user_agent','n8n_status','n8n_error',
+    'user_agent','utm_id','matchtype','network','adgroupid','targetid',
+    'loc_physical','loc_interest','gad_device','n8n_status','n8n_error',
 ];
 $csv_row = [
     $submitted_at, $lead_order_id, $first_name, $last_name, $email, $phone,
@@ -127,7 +172,8 @@ $csv_row = [
     $additional_info, $page_source, $utm_source, $utm_medium, $utm_campaign,
     $utm_term, $utm_content, $click_id, $click_id_type, $device_type,
     $landing_page, $referrer, $time_on_page, ($honeypot !== '' ? 1 : 0), $ip_address,
-    $user_agent, 'received', '',
+    $user_agent, $utm_id, $matchtype, $network, $adgroupid, $targetid,
+    $loc_physical, $loc_interest, $gad_device, 'received', '',
 ];
 // Append under an exclusive lock. 'c' creates the file if missing without
 // truncating, with the pointer at the start so we can detect an empty file
@@ -177,6 +223,15 @@ $lead_payload = json_encode([
     'honeypot_filled' => ($honeypot !== ''),
     'submitted_at'    => $submitted_at,
     'ip_address'      => $ip_address,
+    // ValueTrack / expanded attribution
+    'utm_id'          => $utm_id,
+    'matchtype'       => $matchtype,
+    'network'         => $network,
+    'adgroupid'       => $adgroupid,
+    'targetid'        => $targetid,
+    'loc_physical'    => $loc_physical,
+    'loc_interest'    => $loc_interest,
+    'gad_device'      => $gad_device,
     // Enhanced conversions (SHA-256 hex, lowercase, normalised)
     'hashed_email'    => $hashed_email,
     'hashed_phone'    => $hashed_phone,
