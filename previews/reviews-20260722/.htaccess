@@ -1,0 +1,8 @@
+DirectoryIndex index.html
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header always set X-Robots-Tag "noindex, nofollow, noarchive, nosnippet, noimageindex"
+  Header always set Cache-Control "no-store, max-age=0"
+  Header always set Pragma "no-cache"
+</IfModule>
