@@ -173,29 +173,37 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <input type="hidden" name="loc_interest" value="">
         <input type="hidden" name="page_load_time" value="">
         <input type="hidden" name="time_on_page" value="">
-        <!-- Honeypot — leave blank -->
+        <!-- Honeypot 1 — visually hidden; browser/password-manager autofill discouraged -->
         <div style="position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;" aria-hidden="true">
           <label for="website">Website</label>
-          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off"
+                 data-1p-ignore data-lpignore="true" data-bwignore="true">
+        </div>
+        <!-- Honeypot 2 — different name/hiding method catches bots that recognise "website" traps -->
+        <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;" aria-hidden="true">
+          <label for="contact_reference">Contact reference</label>
+          <input type="text" id="contact_reference" name="contact_reference" tabindex="-1"
+                 autocomplete="off" inputmode="none"
+                 data-1p-ignore data-lpignore="true" data-bwignore="true">
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="first_name">First Name *</label>
-            <input type="text" id="first_name" name="first_name" required placeholder="Jane">
+            <input type="text" id="first_name" name="first_name" required placeholder="Jane" autocomplete="given-name">
           </div>
           <div class="form-group">
             <label for="last_name">Last Name</label>
-            <input type="text" id="last_name" name="last_name" placeholder="Smith">
+            <input type="text" id="last_name" name="last_name" placeholder="Smith" autocomplete="family-name">
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
             <label for="email">Email Address *</label>
-            <input type="email" id="email" name="email" required placeholder="jane@example.com">
+            <input type="email" id="email" name="email" required placeholder="jane@example.com" autocomplete="email">
           </div>
           <div class="form-group">
             <label for="phone">Phone Number *</label>
-            <input type="tel" id="phone" name="phone" required placeholder="(905) 555-0100">
+            <input type="tel" id="phone" name="phone" required placeholder="(905) 555-0100" autocomplete="tel">
           </div>
         </div>
         <div class="form-group">
@@ -508,4 +516,3 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </script>
 </body>
 </html>
-  

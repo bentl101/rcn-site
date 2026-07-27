@@ -94,7 +94,13 @@ $targetid           = clean_text($_POST['targetid']          ?? '');
 $loc_physical       = clean_text($_POST['loc_physical']      ?? '');
 $loc_interest       = clean_text($_POST['loc_interest']      ?? '');
 $time_on_page       = (int)($_POST['time_on_page']           ?? 0);
-$honeypot           = trim($_POST['website']                 ?? '');  // signal, not a gate
+$honeypot_website   = trim($_POST['website']                 ?? '');
+$honeypot_reference = trim($_POST['contact_reference']       ?? '');
+$honeypot_sources   = [];
+if ($honeypot_website !== '')   $honeypot_sources[] = 'website';
+if ($honeypot_reference !== '') $honeypot_sources[] = 'contact_reference';
+$honeypot_filled    = count($honeypot_sources) > 0;  // signal, not a PHP rejection gate
+$honeypot_source    = implode(',', $honeypot_sources);
 $lead_order_id      = clean_text($_POST['lead_order_id']     ?? '');
 if (empty($lead_order_id)) {
     $lead_order_id = 'RCN-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(4));
@@ -171,7 +177,7 @@ $csv_row = [
     $destination, $travel_date, $duration, $budget, $guests, $operator,
     $additional_info, $page_source, $utm_source, $utm_medium, $utm_campaign,
     $utm_term, $utm_content, $click_id, $click_id_type, $device_type,
-    $landing_page, $referrer, $time_on_page, ($honeypot !== '' ? 1 : 0), $ip_address,
+    $landing_page, $referrer, $time_on_page, ($honeypot_filled ? 1 : 0), $ip_address,
     $user_agent, $utm_id, $matchtype, $network, $adgroupid, $targetid,
     $loc_physical, $loc_interest, $gad_device, 'received', '',
 ];
@@ -220,7 +226,8 @@ $lead_payload = json_encode([
     'landing_page'    => $landing_page,
     'referrer'        => $referrer,
     'time_on_page'    => $time_on_page,
-    'honeypot_filled' => ($honeypot !== ''),
+    'honeypot_filled' => $honeypot_filled,
+    'honeypot_source' => $honeypot_source,
     'submitted_at'    => $submitted_at,
     'ip_address'      => $ip_address,
     // ValueTrack / expanded attribution
@@ -325,7 +332,7 @@ if ($utm_content)  $body .= "UTM Content:    {$utm_content}\n";
 if ($click_id)     $body .= "Click ID:       {$click_id} ({$click_id_type})\n";
 if ($device_type)  $body .= "Device:         {$device_type}\n";
 if ($browser_language) $body .= "Language:       {$browser_language}\n";
-if ($honeypot !== '') $body .= "⚠ Honeypot filled (treated as signal, not blocker)\n";
+if ($honeypot_filled) $body .= "⚠ Honeypot filled ({$honeypot_source}; deterministic spam signal)\n";
 $body .= "Submitted:   " . gmdate('d M Y H:i:s') . " UTC\n";
 $body .= "IP:          {$ip_address}\n";
 
