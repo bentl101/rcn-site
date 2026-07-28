@@ -92,6 +92,10 @@
   .concept-card--06 .concept-card__preview span { background: #1a2b3d; }
   .concept-card--06 .concept-card__preview span:first-child { background: #1a2b3d; }
   .concept-card--06 .concept-card__preview span:last-child { background: #ffffff; border: 2px solid #2dbdc5; }
+  .concept-card--07 .concept-card__preview { background: #f5f7f8; grid-template-columns: 1.35fr 0.65fr; }
+  .concept-card--07 .concept-card__preview span { background: #1a2b3d; }
+  .concept-card--07 .concept-card__preview span:first-child { background: #1a2b3d; }
+  .concept-card--07 .concept-card__preview span:last-child { background: #2dbdc5; border: 3px solid #ffffff; box-shadow: 0 0 0 2px #2dbdc5; }
   .concept-card__body { padding: var(--space-lg); }
   .concept-card__meta { display: flex; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); color: var(--color-on-surface-secondary); font-size: 12px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.08em; }
   .concept-card h3 { margin-bottom: var(--space-sm); font-family: var(--font-display); font-size: 29px; line-height: 1.1; }
@@ -127,6 +131,7 @@
   @layer components {
     .concept-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .concept-card { grid-column: span 2; }
+    .concept-card--07 { grid-column: 3 / span 2; }
   }
 }
 
