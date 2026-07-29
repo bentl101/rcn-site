@@ -7,7 +7,7 @@
   <meta name="description" content="Thank you for your enquiry. Our river cruise specialists will be in touch within 24 hours.">
   <!-- Prevent indexing of thank-you page -->
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="assets/css/style.css?v=20260515a">
+  <link rel="stylesheet" href="assets/css/style.css?v=20260729a">
   <link rel="icon" href="images/logo-three.png" type="image/png">
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -41,7 +41,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <a href="amawaterways-river-cruise.html">AmaWaterways</a>
         <a href="viking-river-cruise.html">Viking</a>
       </nav>
-      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <button class="hamburger" id="hamburger" type="button" aria-label="Open menu" aria-controls="mainNav" aria-expanded="false"><span></span><span></span><span></span></button>
     </div>
   </div>
 </header>
@@ -137,8 +137,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </footer>
 
 <script>
-  document.getElementById('hamburger').addEventListener('click', function() {
-    document.getElementById('mainNav').classList.toggle('open');
+  var menuButton = document.getElementById('hamburger');
+  var mainNav = document.getElementById('mainNav');
+  menuButton.addEventListener('click', function() {
+    var isOpen = mainNav.classList.toggle('open');
+    menuButton.setAttribute('aria-expanded', String(isOpen));
+    menuButton.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
   });
   // Conversion strategy:
   //   1) Main "Submit Lead Form" conversion is fired SERVER-SIDE by n8n only when
