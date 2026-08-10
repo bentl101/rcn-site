@@ -1,0 +1,100 @@
+#!/bin/zsh
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  local-image [final|draft] --prompt "description" [MFLUX options]
+  local-image [final|draft] --prompt-file prompt.txt [MFLUX options]
+  local-image info image.png
+
+Profiles:
+  final  Qwen-Image-2512 Q8: best typography and prompt fidelity (default)
+  draft  FLUX.2 Klein 4B Q8: fast commercial-safe iteration
+
+Examples:
+  local-image final --prompt 'A premium river-cruise ad, headline "SAVE 20%"' \
+    --width 1200 --height 628 --seed 42 --output creative.png
+
+  local-image draft --prompt-file brief.txt --auto-seeds 4 \
+    --width 1024 --height 1024 --output concepts.png
+
+All additional options are passed to the selected MFLUX command. Both profiles
+embed reproducibility metadata in the PNG. The first run downloads the model.
+EOF
+}
+
+profile="final"
+if (( $# > 0 )) && [[ "$1" != --* ]]; then
+  profile="$1"
+  shift
+fi
+
+if [[ "$profile" == "help" ]] || [[ "$profile" == "-h" ]] || [[ "$profile" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ "$profile" == "info" ]]; then
+  if (( $# != 1 )); then
+    print -u2 "Usage: local-image info image.png"
+    exit 2
+  fi
+  exec mflux-info "$1"
+fi
+
+if (( $# == 0 )); then
+  usage >&2
+  exit 2
+fi
+
+has_output=0
+has_steps=0
+has_guidance=0
+has_prompt=0
+for arg in "$@"; do
+  case "$arg" in
+    --output) has_output=1 ;;
+    --steps) has_steps=1 ;;
+    --guidance) has_guidance=1 ;;
+    --prompt|--prompt-file) has_prompt=1 ;;
+  esac
+done
+
+if (( ! has_prompt )); then
+  print -u2 "local-image: provide --prompt or --prompt-file"
+  exit 2
+fi
+
+timestamp=$(date +%Y%m%d-%H%M%S)
+extra_args=("$@")
+
+case "$profile" in
+  final)
+    command_name="mflux-generate-qwen"
+    model="mlx-community/Qwen-Image-2512-8bit"
+    (( has_steps )) || extra_args+=(--steps 20)
+    ;;
+  draft)
+    command_name="mflux-generate-flux2"
+    model="mlx-community/flux2-klein-4b-8bit"
+    (( has_steps )) || extra_args+=(--steps 4)
+    (( has_guidance )) || extra_args+=(--guidance 1.0)
+    ;;
+  *)
+    print -u2 "local-image: unknown profile '$profile' (use final or draft)"
+    exit 2
+    ;;
+esac
+
+if (( ! has_output )); then
+  mkdir -p generated
+  extra_args+=(--output "generated/${profile}-${timestamp}.png")
+fi
+
+if ! command -v "$command_name" >/dev/null 2>&1; then
+  print -u2 "local-image: $command_name is not installed or not on PATH"
+  exit 127
+fi
+
+exec "$command_name" --model "$model" --metadata "${extra_args[@]}"
