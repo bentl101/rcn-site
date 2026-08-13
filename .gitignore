@@ -27,3 +27,7 @@ node_modules/
 
 # PHP
 vendor/
+
+# Python tooling
+__pycache__/
+*.py[cod]
