@@ -18,11 +18,13 @@ services:
   php:
     image: php:8.3-fpm-alpine
     restart: unless-stopped
+    command: ["sh", "-c", "chown -R www-data:www-data /var/www/data && exec php-fpm"]
     environment:
       DCT_DATA_DIR: /var/www/data
     volumes:
       - ./:/var/www/html:ro
       - dct_lead_data:/var/www/data
+      - ./php-production.ini:/usr/local/etc/php/conf.d/zz-dct-production.ini:ro
 
 volumes:
   dct_lead_data:
