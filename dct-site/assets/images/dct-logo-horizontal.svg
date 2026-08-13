@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="780" viewBox="0 0 2400 780" role="img" aria-labelledby="title desc">
+  <title id="title">Discount Coach Tours</title>
+  <desc id="desc">Discount Coach Tours logo with a line-art touring coach.</desc>
+  <g transform="translate(300) scale(1.5)" fill="none" stroke="#321551" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M398 89 318 84 238 90 173 108 131 139 120 171 127 205 150 231 184 244 256 247 271 281H438l14-35 53-4 40-21 24-34-4-38-21-29-45-19-61-10Z" stroke-width="12"/>
+    <path d="m152 201 63 4 26 28M191 136l292-7 38 14-20 38-331 2Z" stroke-width="8"/>
+    <circle cx="305" cy="281" r="29" fill="#fff" stroke-width="9"/><circle cx="419" cy="281" r="29" fill="#fff" stroke-width="9"/>
+  </g>
+  <rect x="138" y="352" width="2124" height="246" rx="18" fill="#fffdf8" stroke="#321551" stroke-width="14"/>
+  <text x="1200" y="535" fill="#321551" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="182">Discount</text>
+  <rect x="738" y="624" width="924" height="120" rx="60" fill="#fff" stroke="#d51f35" stroke-width="7"/>
+  <text x="1200" y="704" fill="#d51f35" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">C O A C H   T O U R S</text>
+</svg>
