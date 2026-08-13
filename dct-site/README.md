@@ -16,8 +16,9 @@ Static HTML/CSS/JS with a small PHP staging handler. It is intentionally marked 
 
 Vector masters and high-resolution PNG exports are in `assets/images/`:
 
-- `dct-logo-horizontal.svg` / `.png` (2400 × 780 PNG)
+- `dct-logo-horizontal.svg` / `.png` (3000px-wide PNG)
 - `dct-logo-square.svg` / `.png` (2048 × 2048 PNG)
+- `dct-logo-mark.svg` / `.png` (1024 × 1024 icon/avatar)
 
 ## Local preview
 

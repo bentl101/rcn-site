@@ -1,13 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="780" viewBox="0 0 2400 780" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="520" viewBox="0 0 1800 520" role="img" aria-labelledby="title desc">
   <title id="title">Discount Coach Tours</title>
-  <desc id="desc">Discount Coach Tours logo with a line-art touring coach.</desc>
-  <g transform="translate(300) scale(1.5)" fill="none" stroke="#321551" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M398 89 318 84 238 90 173 108 131 139 120 171 127 205 150 231 184 244 256 247 271 281H438l14-35 53-4 40-21 24-34-4-38-21-29-45-19-61-10Z" stroke-width="12"/>
-    <path d="m152 201 63 4 26 28M191 136l292-7 38 14-20 38-331 2Z" stroke-width="8"/>
-    <circle cx="305" cy="281" r="29" fill="#fff" stroke-width="9"/><circle cx="419" cy="281" r="29" fill="#fff" stroke-width="9"/>
+  <desc id="desc">A modern Discount Coach Tours logo featuring a panoramic letter D, sunset and open road.</desc>
+  <defs>
+    <clipPath id="dct-window-horizontal">
+      <path d="M126 117h123c91 0 153 55 153 143s-62 143-153 143H126Z"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(12 0)">
+    <rect x="32" y="32" width="456" height="456" rx="98" fill="#2b123c"/>
+    <g clip-path="url(#dct-window-horizontal)">
+      <rect x="126" y="117" width="276" height="286" fill="#fff9f0"/>
+      <circle cx="313" cy="241" r="46" fill="#d59a3a"/>
+      <path d="M112 297c56-51 97-50 140-24 45 27 80-8 166-9v73H112Z" fill="#e6b557"/>
+      <path d="M100 430c63-102 133-147 318-156v156Z" fill="#e22642"/>
+      <path d="M215 430c29-80 82-129 170-151" fill="none" stroke="#fff9f0" stroke-width="17" stroke-linecap="round"/>
+    </g>
+    <path d="M126 403V117h123c91 0 153 55 153 143s-62 143-153 143H126" fill="none" stroke="#fff9f0" stroke-width="32" stroke-linejoin="round"/>
   </g>
-  <rect x="138" y="352" width="2124" height="246" rx="18" fill="#fffdf8" stroke="#321551" stroke-width="14"/>
-  <text x="1200" y="535" fill="#321551" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="182">Discount</text>
-  <rect x="738" y="624" width="924" height="120" rx="60" fill="#fff" stroke="#d51f35" stroke-width="7"/>
-  <text x="1200" y="704" fill="#d51f35" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700">C O A C H   T O U R S</text>
+  <text x="545" y="247" fill="#2b123c" font-family="'Avenir Next', Avenir, Arial, sans-serif" font-size="174" font-weight="700" letter-spacing="-6">Discount</text>
+  <rect x="556" y="292" width="74" height="12" rx="6" fill="#e22642"/>
+  <text x="658" y="342" fill="#2b123c" font-family="'Avenir Next', Avenir, Arial, sans-serif" font-size="60" font-weight="700" letter-spacing="16">COACH TOURS</text>
 </svg>

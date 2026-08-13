@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Discount Coach Tours brand mark</title>
+  <desc id="desc">A panoramic letter D containing a sunset and open road.</desc>
+  <defs>
+    <clipPath id="dct-window-mark">
+      <path d="M244 207h216c160 0 269 97 269 252S620 711 460 711H244Z"/>
+    </clipPath>
+  </defs>
+  <rect width="1024" height="1024" rx="212" fill="#2b123c"/>
+  <g clip-path="url(#dct-window-mark)">
+    <rect x="244" y="207" width="485" height="504" fill="#fff9f0"/>
+    <circle cx="572" cy="426" r="81" fill="#d59a3a"/>
+    <path d="M219 525c99-90 171-88 246-42 80 47 141-15 292-17v129H219Z" fill="#e6b557"/>
+    <path d="M199 759c111-179 234-259 558-275v275Z" fill="#e22642"/>
+    <path d="M400 759c51-141 144-226 299-265" fill="none" stroke="#fff9f0" stroke-width="30" stroke-linecap="round"/>
+  </g>
+  <path d="M244 711V207h216c160 0 269 97 269 252S620 711 460 711H244" fill="none" stroke="#fff9f0" stroke-width="57" stroke-linejoin="round"/>
+</svg>

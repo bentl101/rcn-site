@@ -10,15 +10,15 @@
     --surface: #fffdf8;
     --surface-raised: #ffffff;
     --surface-soft: #f5f0e8;
-    --surface-strong: #321551;
+    --surface-strong: #2b123c;
     --line: #ded5e2;
     --line-strong: #bfaec8;
-    --primary: #4a1f62;
-    --primary-strong: #321551;
-    --primary-soft: #eee5f4;
-    --accent: #d51f35;
-    --accent-strong: #a71026;
-    --gold: #9a7429;
+    --primary: #522168;
+    --primary-strong: #2b123c;
+    --primary-soft: #f0e7f4;
+    --accent: #e22642;
+    --accent-strong: #b61931;
+    --gold: #d59a3a;
     --success: #177245;
     --focus: #007f94;
     --on-dark: #fffaf1;
@@ -137,7 +137,7 @@
 
   .hero {
     position: relative; min-height: min(49rem, calc(100svh - 2rem)); display: grid; isolation: isolate; overflow: hidden;
-    background: #23122f;
+    background: #2b123c;
   }
   .hero::before {
     position: absolute; z-index: -2; inset: 0; content: ""; background-image: url("../images/hero-coach-rockies.webp");
