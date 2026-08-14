@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220" role="img" aria-labelledby="title desc">
+  <title id="title">Discount Coach Tours</title>
+  <desc id="desc">Compact Discount Coach Tours logo for small screens.</desc>
+  <defs>
+    <clipPath id="mobile-window"><path d="M55 45h52c42 0 70 25 70 65s-28 65-70 65H55Z"/></clipPath>
+  </defs>
+  <rect x="10" y="10" width="200" height="200" rx="45" fill="#2b123c"/>
+  <g clip-path="url(#mobile-window)">
+    <rect x="55" y="45" width="122" height="130" fill="#fff9f0"/>
+    <circle cx="137" cy="100" r="21" fill="#d59a3a"/>
+    <path d="M49 126c25-23 44-22 63-11 21 13 37-4 76-4v33H49Z" fill="#e6b557"/>
+    <path d="M44 187c29-46 60-67 144-71v71Z" fill="#e22642"/>
+    <path d="M96 187c13-37 37-59 77-69" fill="none" stroke="#fff9f0" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <path d="M55 175V45h52c42 0 70 25 70 65s-28 65-70 65H55" fill="none" stroke="#fff9f0" stroke-width="14" stroke-linejoin="round"/>
+  <text x="242" y="106" fill="#2b123c" font-family="'Avenir Next', Avenir, Arial, sans-serif" font-size="82" font-weight="700" letter-spacing="-3">Discount</text>
+  <rect x="244" y="129" width="46" height="8" rx="4" fill="#e22642"/>
+  <text x="310" y="158" fill="#2b123c" font-family="'Avenir Next', Avenir, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="7">COACH TOURS</text>
+</svg>

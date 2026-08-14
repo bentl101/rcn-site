@@ -104,7 +104,12 @@
       if (started) return;
       started = true;
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: 'form_start', form_name: 'dct_enquiry' });
+      window.dataLayer.push({
+        event: 'form_start',
+        form_name: 'dct_enquiry',
+        form_operator: operatorField?.value || '',
+        form_page: document.title
+      });
     });
 
     form.addEventListener('submit', () => {
@@ -117,12 +122,29 @@
       });
       sessionStorage.setItem('dct_lead_order_id', orderId);
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({ event: 'form_submission', form_name: 'dct_enquiry', lead_order_id: orderId });
+      window.dataLayer.push({
+        event: 'form_submission',
+        form_name: 'dct_enquiry',
+        form_operator: operatorField?.value || '',
+        form_source: form.querySelector('[name="source_page"]')?.value || '',
+        lead_order_id: orderId
+      });
       const button = form.querySelector('button[type="submit"]');
       if (button) {
         button.disabled = true;
         button.textContent = 'Sending your enquiry…';
       }
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    const phoneLink = event.target.closest('a[href^="tel:"]');
+    if (!phoneLink) return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: 'LP_PhoneClick',
+      phoneNumber: phoneLink.getAttribute('href').replace('tel:', ''),
+      pageName: document.title
     });
   });
 

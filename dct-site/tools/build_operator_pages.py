@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the four operator landing pages from a shared, reviewable template."""
+"""Build four operator-specific PPC landing pages from one shared template."""
 
 from html import escape
 from pathlib import Path
@@ -8,12 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 OPERATORS = {
     "trafalgar-tours.html": {
-        "name": "Trafalgar Tours",
-        "short": "Trafalgar",
-        "mark": "operator-trafalgar.svg",
-        "image": "trafalgar-guests.webp",
-        "position": "center",
-        "eyebrow": "Iconic sights · local stories · effortless days",
+        "name": "Trafalgar Tours", "short": "Trafalgar", "slug": "trafalgar", "mark": "operator-trafalgar.svg",
+        "image": "trafalgar-guests.webp", "eyebrow": "Iconic sights · local stories · effortless days",
         "headline": "Tour differently with Trafalgar",
         "intro": "See the places you came for, then go deeper with local experiences, knowledgeable tour directors and the details already taken care of.",
         "summary": "Trafalgar is a strong match for travellers who want a social, well-orchestrated journey that blends world-famous highlights with stories and encounters that add local character.",
@@ -28,12 +24,8 @@ OPERATORS = {
         "fact": "Trafalgar describes more than 75 years of guided travel experience, combining must-see places with local experiences.",
     },
     "globus-journeys.html": {
-        "name": "Globus Journeys",
-        "short": "Globus",
-        "mark": "operator-globus.svg",
-        "image": "globus-alps.webp",
-        "position": "center",
-        "eyebrow": "Classic touring · thoughtful choices · more included",
+        "name": "Globus Journeys", "short": "Globus", "slug": "globus", "mark": "operator-globus.svg",
+        "image": "globus-alps.webp", "eyebrow": "Classic touring · thoughtful choices · more included",
         "headline": "Make big trips feel beautifully easy",
         "intro": "Globus brings hotels, transportation, must-see experiences and expert guidance together — with selected choices that let you personalize the day.",
         "summary": "Globus suits travellers who appreciate a polished classic tour, want many of the essentials arranged and like having choices between selected included experiences.",
@@ -48,12 +40,8 @@ OPERATORS = {
         "fact": "Globus highlights nearly a century of touring and offers classic, small-group and off-season Escapes styles.",
     },
     "cosmos-tours.html": {
-        "name": "Cosmos Tours",
-        "short": "Cosmos",
-        "mark": "operator-cosmos.svg",
-        "image": "cosmos-highlands.webp",
-        "position": "center",
-        "eyebrow": "Brilliant value · famous sights · time your way",
+        "name": "Cosmos Tours", "short": "Cosmos", "slug": "cosmos", "mark": "operator-cosmos.svg",
+        "image": "cosmos-highlands.webp", "eyebrow": "Brilliant value · famous sights · time your way",
         "headline": "Go farther without stretching the budget",
         "intro": "Cosmos keeps guided touring comfortable and attainable, pairing the essential sights with practical hotels, smooth transportation and time to explore.",
         "summary": "Cosmos is designed for value-conscious travellers who want the confidence of an escorted itinerary, but are happy with practical choices and free time for their own discoveries.",
@@ -68,12 +56,8 @@ OPERATORS = {
         "fact": "Cosmos presents more than 60 years of affordable touring, combining guided sightseeing with free time and optional activities.",
     },
     "insight-vacations.html": {
-        "name": "Insight Vacations",
-        "short": "Insight",
-        "mark": "operator-insight.svg",
-        "image": "insight-lake-como.webp",
-        "position": "center",
-        "eyebrow": "Premium touring · meaningful moments · elevated comfort",
+        "name": "Insight Vacations", "short": "Insight", "slug": "insight", "mark": "operator-insight.svg",
+        "image": "insight-lake-como.webp", "eyebrow": "Premium touring · meaningful moments · elevated comfort",
         "headline": "Travel in style, without missing the story",
         "intro": "Insight Vacations combines carefully chosen stays, immersive experiences and comfortable touring for travellers who value depth as much as ease.",
         "summary": "Insight is a natural fit when premium details matter: distinctive accommodations, a little more room on the road, carefully chosen dining and experiences with a strong sense of place.",
@@ -90,60 +74,130 @@ OPERATORS = {
 }
 
 
+def brand_picture() -> str:
+    return '''<picture>
+      <source media="(max-width: 767px)" srcset="/assets/images/dct-logo-mobile.svg?v=20260814a">
+      <img src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
+    </picture>'''
+
+
 def list_items(items: list[str]) -> str:
     return "\n".join(f"<li>{escape(item)}</li>" for item in items)
 
 
+def enquiry_form(data: dict) -> str:
+    name = escape(data["name"])
+    short = escape(data["short"])
+    source = f'{short} PPC Landing Page'
+    return f'''<section class="section section-soft operator-form-section" id="enquire">
+      <div class="shell form-wrap">
+        <aside class="operator-form-intro">
+          <span class="operator-form-kicker">{short} enquiry</span>
+          <h2>Get matched with the right {short} tour</h2>
+          <p class="lede">Tell us where and when you’d like to travel. We’ll use your details to narrow the current {short} itineraries that fit.</p>
+          <div class="locked-operator"><span>Your selected operator</span><strong>{name}</strong></div>
+          <ul class="check-list">
+            <li>Ask about current dates and availability</li>
+            <li>Compare itinerary pace and inclusions</li>
+            <li>Discuss flights from your departure city</li>
+            <li>No obligation to book</li>
+          </ul>
+          <p class="small">Prefer to speak with someone? Call <a href="tel:+18779778586">1 (877) 977-8586</a>.</p>
+        </aside>
+
+        <div class="form-card operator-form-card">
+          <form action="/submit.php" method="post" data-lead-form>
+            <div class="form-status" role="status" aria-live="polite"></div>
+            <div class="form-section">
+              <h3>Your contact details</h3>
+              <div class="field-grid two">
+                <div class="field"><label for="first_name">First name</label><input id="first_name" name="first_name" autocomplete="given-name" required></div>
+                <div class="field"><label for="last_name">Last name</label><input id="last_name" name="last_name" autocomplete="family-name" required></div>
+                <div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+                <div class="field"><label for="phone">Phone</label><input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required></div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3>Your {short} trip</h3>
+              <div class="field-grid two">
+                <div class="field"><label for="destination">Where would you like to go?</label><input id="destination" name="destination" placeholder="e.g. Italy, Canadian Rockies" required></div>
+                <div class="field"><label for="departure_city">Departing from</label><input id="departure_city" name="departure_city" placeholder="e.g. Toronto" required></div>
+                <div class="field"><label for="travel_date">Preferred travel month</label><input id="travel_date" name="travel_date" type="month" required></div>
+                <div class="field"><label for="duration">Ideal trip length</label><select id="duration" name="duration" required><option value="">Choose one</option><option>Up to 7 days</option><option>8–10 days</option><option>11–14 days</option><option>15–21 days</option><option>22+ days</option><option>Flexible</option></select></div>
+                <div class="field"><label for="guests">Travellers</label><select id="guests" name="guests" required><option value="">Choose one</option><option value="1">1 traveller</option><option value="2">2 travellers</option><option value="3">3 travellers</option><option value="4">4 travellers</option><option value="5+">5+ travellers</option><option value="group">Group enquiry</option></select></div>
+                <div class="field"><label for="budget">Budget per person <span class="optional">(CAD)</span></label><select id="budget" name="budget" required><option value="">Choose one</option><option>Under $3,000</option><option>$3,000–$5,000</option><option>$5,000–$8,000</option><option>$8,000–$12,000</option><option>$12,000+</option><option>Not sure yet</option></select></div>
+                <div class="field"><label for="pace">Preferred pace</label><select id="pace" name="pace" required><option value="">Choose one</option><option>Relaxed</option><option>Balanced</option><option>Active</option><option>Not sure</option></select></div>
+              </div>
+              <div class="field"><label for="notes">What matters most? <span class="optional">(optional)</span></label><textarea id="notes" name="notes" placeholder="Must-see places, mobility needs, room preferences or anything else that would help."></textarea></div>
+              <fieldset class="radio-set"><legend>How should we contact you?</legend><div class="radio-chip"><input id="contact_either" name="contact_preference" value="Either" type="radio" checked><label for="contact_either">Either</label></div><div class="radio-chip"><input id="contact_phone" name="contact_preference" value="Phone" type="radio"><label for="contact_phone">Phone</label></div><div class="radio-chip"><input id="contact_email" name="contact_preference" value="Email" type="radio"><label for="contact_email">Email</label></div></fieldset>
+            </div>
+
+            <div class="form-note"><strong>Review-site note:</strong> this staging form stores test submissions securely. It does not yet email the client or write to their CRM.</div>
+            <div class="hp" aria-hidden="true"><label for="website">Leave this field empty</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
+            <input type="hidden" name="operator" value="{name}">
+            <input type="hidden" name="lead_order_id"><input type="hidden" name="time_on_page"><input type="hidden" name="utm_source"><input type="hidden" name="utm_medium"><input type="hidden" name="utm_campaign"><input type="hidden" name="utm_term"><input type="hidden" name="utm_content"><input type="hidden" name="click_id"><input type="hidden" name="click_id_type"><input type="hidden" name="landing_page"><input type="hidden" name="referrer"><input type="hidden" name="source_page" value="{source}">
+            <button class="button button-accent button-lg" type="submit">Show me {short} tour options</button>
+            <div class="operator-reassurance"><span>TICO registered</span><span>No-obligation enquiry</span><span>Canadian specialists</span></div>
+            <p class="privacy-note">By submitting this form, you agree that Discount Coach Tours may contact you about your enquiry. Your information will be handled according to our <a href="/privacy.html">privacy notice</a>.</p>
+          </form>
+        </div>
+      </div>
+    </section>'''
+
+
 def page(data: dict) -> str:
+    name, short = escape(data["name"]), escape(data["short"])
     tags = "".join(f'<span class="tag">{escape(tag)}</span>' for tag in data["tags"])
-    cards = "\n".join(
-        f'<article class="feature-card"><h3>{escape(title)}</h3><p>{escape(copy)}</p></article>'
-        for title, copy in data["cards"]
-    )
-    operator_query = data["name"].replace(" ", "%20")
+    cards = "\n".join(f'<article class="feature-card"><h3>{escape(title)}</h3><p>{escape(copy)}</p></article>' for title, copy in data["cards"])
+    regions = "".join(f'<span class="tag">{escape(region)}</span>' for region in data["regions"])
+    brand = brand_picture()
     return f'''<!doctype html>
 <html lang="en-CA">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(data["name"])} | Discount Coach Tours</title>
-  <meta name="description" content="Compare {escape(data["name"])} guided coach tours with help from a Canadian travel specialist.">
+  <meta name="color-scheme" content="light dark">
+  <title>{name} | Discount Coach Tours</title>
+  <meta name="description" content="Compare {name} guided coach tours with help from a Canadian travel specialist.">
   <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#2b123c">
-  <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260813b" type="image/svg+xml">
+  <meta property="og:title" content="{name} | Discount Coach Tours"><meta property="og:description" content="Find a {short} guided tour that fits your destination, timing and budget."><meta property="og:image" content="https://dct.copperchunk.com/assets/images/{data['image']}"><meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814a" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260813a">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20260814b">
   <script>window.dataLayer=window.dataLayer||[];</script>
 </head>
-<body>
+<body class="operator-page operator-page-{data['slug']}">
   <a class="skip-link" href="#main">Skip to main content</a>
   <div class="preview-bar"><p>Private review site — tour details and tracking are awaiting client approval</p></div>
   <header class="site-header"><div class="shell nav">
-    <a class="brand" href="/" aria-label="Discount Coach Tours home"><img src="/assets/images/dct-logo-horizontal.svg?v=20260813b" alt="Discount Coach Tours" width="1800" height="520"></a>
-    <nav aria-label="Primary navigation"><ul class="nav-links" data-nav-links><li><a href="/#operators">Tour operators</a></li><li><a href="/#why-coach">Why coach touring</a></li><li><a href="/#how-it-works">How it works</a></li><li><a href="/#enquire">Contact</a></li><li><a class="button button-accent" href="/?operator={operator_query}#enquire">Plan my tour</a></li></ul></nav>
-    <div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Use dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/></svg></button><a class="button" href="tel:+18779778586">1 877 977 8586</a><button class="icon-button menu-button" type="button" data-menu-toggle aria-expanded="false" aria-label="Open menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+    <a class="brand" href="/" aria-label="Discount Coach Tours home">{brand}</a>
+    <nav aria-label="Primary navigation"><ul class="nav-links" data-nav-links><li><a href="/#operators">Other operators</a></li><li><a href="#why-choose">Why {short}</a></li><li><a href="#destinations">Destinations</a></li><li><a class="button button-accent" href="#enquire">Get {short} options</a></li></ul></nav>
+    <div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Use dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/></svg></button><button class="icon-button menu-button" type="button" data-menu-toggle aria-expanded="false" aria-label="Open menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
   </div></header>
   <main id="main">
-    <section class="operator-hero" style="--operator-image:url('/assets/images/{data["image"]}')"><div class="shell operator-hero-inner"><div class="operator-hero-copy">
-      <p class="breadcrumbs"><a href="/">Home</a> / {escape(data["name"])}</p>
-      <div class="operator-mark"><img src="/assets/images/{data["mark"]}" alt="{escape(data["name"])}" width="560" height="160"></div>
-      <p class="eyebrow">{escape(data["eyebrow"])}</p><h1>{escape(data["headline"])}</h1><p class="lede">{escape(data["intro"])}</p>
-      <div class="tag-row">{tags}</div><div class="cluster"><a class="button button-accent button-lg" href="/?operator={operator_query}#enquire">Ask about {escape(data["short"])} tours</a><a class="button button-light button-lg" href="tel:+18779778586">Call 1 877 977 8586</a></div>
+    <section class="operator-hero"><div class="shell operator-hero-inner"><div class="operator-hero-copy">
+      <p class="breadcrumbs"><a href="/">Home</a> / {name}</p>
+      <div class="operator-mark"><img src="/assets/images/{data['mark']}" alt="{name}" width="560" height="160"></div>
+      <p class="eyebrow">{escape(data['eyebrow'])}</p><h1>{escape(data['headline'])}</h1><p class="lede">{escape(data['intro'])}</p>
+      <div class="tag-row">{tags}</div><div class="cluster"><a class="button button-accent button-lg" href="#enquire">Get {short} tour options</a></div>
+      <p class="operator-contact">Or call <a href="tel:+18779778586">1 (877) 977-8586</a> if you prefer to talk.</p>
     </div></div></section>
 
-    <section class="section"><div class="shell grid-2"><div><p class="eyebrow">Is {escape(data["short"])} right for you?</p><h2 style="margin-top:.8rem">A guided journey with its own point of view</h2><p class="lede" style="margin-top:1.2rem">{escape(data["summary"])}</p><p class="small" style="margin-top:1rem">{escape(data["fact"])}</p></div><div class="media-frame"><img src="/assets/images/{data["image"]}" alt="Scenic {escape(data["short"])} style coach touring" width="1200" height="900"></div></div></section>
+    <section class="section" id="why-choose"><div class="shell grid-2"><div><p class="eyebrow">Is {short} right for you?</p><h2 class="spaced-heading">A guided journey with its own point of view</h2><p class="lede spaced-copy">{escape(data['summary'])}</p><p class="small spaced-note">{escape(data['fact'])}</p></div><div class="media-frame"><img src="/assets/images/{data['image']}" alt="Scenic {short} style coach touring" width="1200" height="900"></div></div></section>
 
     <section class="section section-soft"><div class="shell"><div class="section-heading center"><p class="eyebrow">Best for</p><h2>Travellers who want the trip to feel easy</h2></div><div class="grid-3">{cards}</div></div></section>
 
-    <section class="section"><div class="shell grid-2"><div><p class="eyebrow">Where could you go?</p><h2 style="margin-top:.8rem">A world of coach touring</h2><p class="lede" style="margin-top:1.2rem">Availability changes by season. We’ll compare current itineraries and departure dates around the destination you have in mind.</p><div class="tag-row" style="margin-top:1.5rem">{"".join(f'<span class="tag">{escape(region)}</span>' for region in data["regions"])}</div></div><div class="info-card"><h3>What is usually included</h3><ul class="check-list" style="margin-top:1.2rem">{list_items(data["included"])}</ul><p class="small" style="margin-top:1.2rem">Exact inclusions vary by itinerary and departure. Your specialist will confirm the current operator terms before booking.</p></div></div></section>
+    <section class="section" id="destinations"><div class="shell grid-2"><div><p class="eyebrow">Where could you go?</p><h2 class="spaced-heading">A world of {short} touring</h2><p class="lede spaced-copy">Availability changes by season. We’ll compare current itineraries and departure dates around the destination you have in mind.</p><div class="tag-row spaced-tags">{regions}</div></div><div class="info-card"><h3>What is usually included</h3><ul class="check-list spaced-list">{list_items(data['included'])}</ul><p class="small spaced-note">Exact inclusions vary by itinerary and departure. Your specialist will confirm the current operator terms before booking.</p></div></div></section>
 
-    <section class="section-tight"><div class="shell cta-band"><div><p class="eyebrow" style="color:#f2bd64">Let’s find your departure</p><h2 style="margin-top:.6rem">Want us to compare current {escape(data["short"])} options?</h2><p style="margin-top:.8rem;color:rgb(255 250 241 / 78%)">Share your destination, timing and budget. A specialist can help narrow the tours that fit.</p></div><a class="button button-accent button-lg" href="/?operator={operator_query}#enquire">Start my enquiry</a></div></section>
+    {enquiry_form(data)}
   </main>
-  <footer class="site-footer"><div class="shell"><div class="footer-grid"><div><a class="brand" href="/"><img src="/assets/images/dct-logo-horizontal.svg?v=20260813b" alt="Discount Coach Tours" width="1800" height="520"></a><p class="small" style="margin-top:1rem;max-width:24rem">Independent help comparing guided coach holidays from trusted tour operators.</p></div><div><h3>Tour operators</h3><ul class="footer-links"><li><a href="/trafalgar-tours.html">Trafalgar Tours</a></li><li><a href="/globus-journeys.html">Globus Journeys</a></li><li><a href="/cosmos-tours.html">Cosmos Tours</a></li><li><a href="/insight-vacations.html">Insight Vacations</a></li></ul></div><div><h3>Plan</h3><ul class="footer-links"><li><a href="/#why-coach">Why coach touring</a></li><li><a href="/#enquire">Enquire now</a></li><li><a href="/privacy.html">Privacy</a></li></ul></div><div><h3>Contact</h3><ul class="footer-links"><li><a href="tel:+18779778586">1 (877) 977-8586</a></li><li><a href="mailto:sales@discountcoachtours.ca">sales@discountcoachtours.ca</a></li><li>1425 Osprey Drive, Unit 203<br>Ancaster, ON L9G 4V5</li></ul></div></div><div class="footer-bottom"><p>© <span data-current-year></span> Discount Coach Tours. TICO registration #50020475.</p><p>Tour operator names and marks belong to their respective owners.</p></div></div></footer>
-  <script src="/assets/js/site.js?v=20260813a" defer></script>
+  <footer class="site-footer"><div class="shell"><div class="footer-grid"><div><a class="brand" href="/">{brand}</a><p class="small footer-intro">Independent help comparing guided coach holidays from trusted tour operators.</p></div><div><h3>Tour operators</h3><ul class="footer-links"><li><a href="/trafalgar-tours.html">Trafalgar Tours</a></li><li><a href="/globus-journeys.html">Globus Journeys</a></li><li><a href="/cosmos-tours.html">Cosmos Tours</a></li><li><a href="/insight-vacations.html">Insight Vacations</a></li></ul></div><div><h3>Plan</h3><ul class="footer-links"><li><a href="#why-choose">Why {short}</a></li><li><a href="#enquire">Enquire now</a></li><li><a href="/privacy.html">Privacy</a></li></ul></div><div><h3>Contact</h3><ul class="footer-links"><li><a href="tel:+18779778586">1 (877) 977-8586</a></li><li><a href="mailto:sales@discountcoachtours.ca">sales@discountcoachtours.ca</a></li><li>1425 Osprey Drive, Unit 203<br>Ancaster, ON L9G 4V5</li></ul></div></div><div class="footer-bottom"><p>© <span data-current-year></span> Discount Coach Tours. TICO registration #50020475.</p><p>Tour operator names and marks belong to their respective owners.</p></div></div></footer>
+  <script src="/assets/js/site.js?v=20260814b" defer></script>
 </body></html>'''
 
 
 for filename, operator in OPERATORS.items():
     (ROOT / filename).write_text(page(operator), encoding="utf-8")
 
-print(f"Built {len(OPERATORS)} operator pages.")
+print(f"Built {len(OPERATORS)} operator PPC pages with embedded forms.")
