@@ -180,7 +180,7 @@
   .operator-card-media > img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms var(--ease); }
   .operator-card:hover .operator-card-media > img { transform: scale(1.045); }
   .operator-mark { position: absolute; z-index: 2; right: 1rem; bottom: 1rem; left: 1rem; min-height: 4.4rem; display: grid; padding: 0.75rem; place-items: center; border-radius: var(--radius-sm); background: rgb(255 255 255 / 94%); box-shadow: var(--shadow-sm); }
-  .operator-mark img { width: 100%; max-height: 3rem; }
+  .operator-mark img { width: 100%; height: auto; max-height: 3rem; object-fit: contain; }
   .operator-card-body { display: grid; padding: 1.35rem; gap: 0.8rem; flex: 1; }
   .operator-card-body p { font-size: 0.94rem; }
   .text-link { display: inline-flex; margin-top: auto; gap: 0.45rem; align-items: center; color: var(--primary); font-size: 0.9rem; font-weight: 850; text-decoration: none; }

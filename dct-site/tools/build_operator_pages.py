@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 OPERATORS = {
     "trafalgar-tours.html": {
-        "name": "Trafalgar Tours", "short": "Trafalgar", "slug": "trafalgar", "mark": "operator-trafalgar.svg",
+        "name": "Trafalgar Tours", "short": "Trafalgar", "slug": "trafalgar", "mark": "operator-trafalgar.svg", "mark_width": 146, "mark_height": 40,
         "image": "trafalgar-guests.webp", "eyebrow": "Iconic sights · local stories · effortless days",
         "headline": "Tour differently with Trafalgar",
         "intro": "See the places you came for, then go deeper with local experiences, knowledgeable tour directors and the details already taken care of.",
@@ -24,7 +24,7 @@ OPERATORS = {
         "fact": "Trafalgar describes more than 75 years of guided travel experience, combining must-see places with local experiences.",
     },
     "globus-journeys.html": {
-        "name": "Globus Journeys", "short": "Globus", "slug": "globus", "mark": "operator-globus.svg",
+        "name": "Globus Journeys", "short": "Globus", "slug": "globus", "mark": "operator-globus.jpg", "mark_width": 1396, "mark_height": 228,
         "image": "globus-alps.webp", "eyebrow": "Classic touring · thoughtful choices · more included",
         "headline": "Make big trips feel beautifully easy",
         "intro": "Globus brings hotels, transportation, must-see experiences and expert guidance together — with selected choices that let you personalize the day.",
@@ -40,7 +40,7 @@ OPERATORS = {
         "fact": "Globus highlights nearly a century of touring and offers classic, small-group and off-season Escapes styles.",
     },
     "cosmos-tours.html": {
-        "name": "Cosmos Tours", "short": "Cosmos", "slug": "cosmos", "mark": "operator-cosmos.svg",
+        "name": "Cosmos Tours", "short": "Cosmos", "slug": "cosmos", "mark": "operator-cosmos.jpg", "mark_width": 1600, "mark_height": 228,
         "image": "cosmos-highlands.webp", "eyebrow": "Brilliant value · famous sights · time your way",
         "headline": "Go farther without stretching the budget",
         "intro": "Cosmos keeps guided touring comfortable and attainable, pairing the essential sights with practical hotels, smooth transportation and time to explore.",
@@ -56,7 +56,7 @@ OPERATORS = {
         "fact": "Cosmos presents more than 60 years of affordable touring, combining guided sightseeing with free time and optional activities.",
     },
     "insight-vacations.html": {
-        "name": "Insight Vacations", "short": "Insight", "slug": "insight", "mark": "operator-insight.svg",
+        "name": "Insight Vacations", "short": "Insight", "slug": "insight", "mark": "operator-insight.svg", "mark_width": 5845, "mark_height": 850,
         "image": "insight-lake-como.webp", "eyebrow": "Premium touring · meaningful moments · elevated comfort",
         "headline": "Travel in style, without missing the story",
         "intro": "Insight Vacations combines carefully chosen stays, immersive experiences and comfortable touring for travellers who value depth as much as ease.",
@@ -185,7 +185,7 @@ def page(data: dict) -> str:
   <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814b" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260814e">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20260814f">
   <script>window.dataLayer=window.dataLayer||[];</script>
 </head>
 <body class="operator-page operator-page-{data['slug']}">
@@ -199,7 +199,7 @@ def page(data: dict) -> str:
   <main id="main">
     <section class="operator-hero"><div class="shell operator-hero-inner"><div class="operator-hero-copy">
       <p class="breadcrumbs"><a href="/">Home</a> / {name}</p>
-      <div class="operator-mark"><img src="/assets/images/{data['mark']}" alt="{name}" width="560" height="160"></div>
+      <div class="operator-mark"><img src="/assets/images/{data['mark']}" alt="{name}" width="{data['mark_width']}" height="{data['mark_height']}"></div>
       <p class="eyebrow">{escape(data['eyebrow'])}</p><h1>{escape(data['headline'])}</h1><p class="lede">{escape(data['intro'])}</p>
       <div class="tag-row">{tags}</div><div class="cluster"><a class="button button-accent button-lg" href="#enquire">Get {short} tour options</a></div>
     </div></div></section>
