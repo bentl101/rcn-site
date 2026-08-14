@@ -76,17 +76,14 @@ OPERATORS = {
 
 def header_brand() -> str:
     return '''<a class="brand header-brand" href="/" aria-label="Discount Coach Tours home">
-      <img class="brand-image-desktop" src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
-      <span class="brand-lockup-mobile" aria-hidden="true">
-        <img class="brand-mobile-mark" src="/assets/images/dct-logo-mark.svg?v=20260814a" alt="" width="1024" height="1024">
-        <span class="brand-mobile-copy"><strong>Discount</strong><span>Coach Tours</span></span>
-      </span>
+      <img class="brand-image-desktop" src="/assets/images/dct-logo-horizontal.svg?v=20260814b" alt="Discount Coach Tours" width="1800" height="520">
+      <img class="brand-image-mobile" src="/assets/images/dct-logo-mobile.svg?v=20260814b" alt="" width="720" height="220">
     </a>'''
 
 
 def footer_brand() -> str:
     return '''<a class="brand" href="/" aria-label="Discount Coach Tours home">
-      <img src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
+      <img src="/assets/images/dct-logo-horizontal.svg?v=20260814b" alt="Discount Coach Tours" width="1800" height="520">
     </a>'''
 
 
@@ -185,10 +182,10 @@ def page(data: dict) -> str:
   <meta name="description" content="Compare {name} guided coach tours with help from a Canadian travel specialist.">
   <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#2b123c">
   <meta property="og:title" content="{name} | Discount Coach Tours"><meta property="og:description" content="Find a {short} guided tour that fits your destination, timing and budget."><meta property="og:image" content="https://dct.copperchunk.com/assets/images/{data['image']}"><meta name="twitter:card" content="summary_large_image">
-  <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814a" type="image/svg+xml">
+  <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814b" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260814d">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20260814e">
   <script>window.dataLayer=window.dataLayer||[];</script>
 </head>
 <body class="operator-page operator-page-{data['slug']}">

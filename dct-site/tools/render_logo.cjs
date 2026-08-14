@@ -9,6 +9,7 @@ const images = path.join(root, "assets", "images");
 
 const jobs = [
   ["dct-logo-horizontal.svg", "dct-logo-horizontal.png", 3000],
+  ["dct-logo-mobile.svg", "dct-logo-mobile.png", 1440],
   ["dct-logo-square.svg", "dct-logo-square.png", 2048],
   ["dct-logo-mark.svg", "dct-logo-mark.png", 1024],
 ];
@@ -19,7 +20,7 @@ Promise.all(jobs.map(([source, target, width]) =>
     .png({ compressionLevel: 9 })
     .toFile(path.join(images, target))
 )).then(() => {
-  console.log("Rendered horizontal, square and mark-only PNG logos.");
+  console.log("Rendered horizontal, mobile, square and mark-only PNG logos.");
 }).catch((error) => {
   console.error(error);
   process.exitCode = 1;

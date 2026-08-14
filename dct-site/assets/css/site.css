@@ -47,7 +47,7 @@
 
 @layer base {
   body {
-    min-width: 20rem;
+    min-width: 0;
     background: var(--surface);
     color: var(--ink);
     font-family: var(--font-body);
@@ -112,7 +112,7 @@
   .header-brand { text-decoration: none; }
   .brand picture { display: block; width: 100%; height: 100%; }
   .brand img { width: 100%; height: 100%; object-fit: contain; }
-  .brand-lockup-mobile { display: none; }
+  .brand-image-mobile { display: none; }
   .nav-links { display: flex; gap: clamp(0.65rem, 1.4vw, 1.4rem); align-items: center; list-style: none; }
   .nav-links a:not(.button) { display: inline-flex; min-height: 2.75rem; align-items: center; color: var(--ink-soft); font-size: 0.88rem; font-weight: 720; text-decoration: none; }
   .nav-links a:not(.button):hover { color: var(--primary); }
@@ -328,13 +328,9 @@
   @media (max-width: 47.99rem) {
     .shell { width: min(calc(100% - 1.25rem), var(--content)); }
     .brand { width: 12.25rem; height: 3.75rem; }
-    .header-brand { width: auto; min-width: 0; height: 3.5rem; }
+    .header-brand { width: 9.1rem; min-width: 0; height: auto; flex: 0 0 9.1rem; }
     .header-brand .brand-image-desktop { display: none; }
-    .header-brand .brand-lockup-mobile { display: flex; min-width: 0; align-items: center; gap: 0.6rem; }
-    .header-brand .brand-mobile-mark { width: 3rem; height: 3rem; flex: 0 0 3rem; object-fit: contain; }
-    .brand-mobile-copy { display: grid; min-width: 0; color: var(--ink); line-height: 1; }
-    .brand-mobile-copy strong { font-size: 1rem; font-weight: 850; letter-spacing: -0.025em; white-space: nowrap; }
-    .brand-mobile-copy span { margin-top: 0.3rem; color: var(--primary); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.13em; text-transform: uppercase; white-space: nowrap; }
+    .header-brand .brand-image-mobile { display: block; width: 100%; height: auto; object-fit: contain; }
     .nav-actions .header-callback { display: inline-flex; min-height: 2.75rem; padding: 0.6rem 0.8rem; font-size: 0.78rem; white-space: nowrap; }
     .header-callback .callback-icon { display: none; }
     .nav-actions [data-theme-toggle] { display: none; }
@@ -354,6 +350,7 @@
   }
 
   @media (max-width: 22.49rem) {
+    .header-brand { width: 8rem; flex-basis: 8rem; }
     .callback-label-long { display: none; }
     .callback-label-short { display: inline; }
   }
