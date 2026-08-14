@@ -199,7 +199,7 @@ def page(data: dict) -> str:
   <main id="main">
     <section class="operator-hero"><div class="shell operator-hero-inner"><div class="operator-hero-copy">
       <p class="breadcrumbs"><a href="/">Home</a> / {name}</p>
-      <div class="operator-mark"><img src="/assets/images/{data['mark']}" alt="{name}" width="{data['mark_width']}" height="{data['mark_height']}"></div>
+      <div class="operator-mark"><img src="/assets/images/{data['mark']}?v=20260814a" alt="{name}" width="{data['mark_width']}" height="{data['mark_height']}"></div>
       <p class="eyebrow">{escape(data['eyebrow'])}</p><h1>{escape(data['headline'])}</h1><p class="lede">{escape(data['intro'])}</p>
       <div class="tag-row">{tags}</div><div class="cluster"><a class="button button-accent button-lg" href="#enquire">Get {short} tour options</a></div>
     </div></div></section>
