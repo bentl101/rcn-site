@@ -74,11 +74,34 @@ OPERATORS = {
 }
 
 
-def brand_picture() -> str:
-    return '''<picture>
-      <source media="(max-width: 767px)" srcset="/assets/images/dct-logo-mobile.svg?v=20260814a">
+def header_brand() -> str:
+    return '''<a class="brand header-brand" href="/" aria-label="Discount Coach Tours home">
+      <img class="brand-image-desktop" src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
+      <span class="brand-lockup-mobile" aria-hidden="true">
+        <img class="brand-mobile-mark" src="/assets/images/dct-logo-mark.svg?v=20260814a" alt="" width="1024" height="1024">
+        <span class="brand-mobile-copy"><strong>Discount Coach</strong><span>Tours</span></span>
+      </span>
+    </a>'''
+
+
+def footer_brand() -> str:
+    return '''<a class="brand" href="/" aria-label="Discount Coach Tours home">
       <img src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
-    </picture>'''
+    </a>'''
+
+
+def operator_navigation(active_slug: str) -> str:
+    links = [
+        ("Trafalgar", "/trafalgar-tours.html", "trafalgar"),
+        ("Globus", "/globus-journeys.html", "globus"),
+        ("Cosmos", "/cosmos-tours.html", "cosmos"),
+        ("Insight", "/insight-vacations.html", "insight"),
+    ]
+    items = []
+    for label, href, slug in links:
+        current = ' aria-current="page"' if slug == active_slug else ""
+        items.append(f'<li><a href="{href}"{current}>{label}</a></li>')
+    return "".join(items)
 
 
 def list_items(items: list[str]) -> str:
@@ -151,7 +174,9 @@ def page(data: dict) -> str:
     tags = "".join(f'<span class="tag">{escape(tag)}</span>' for tag in data["tags"])
     cards = "\n".join(f'<article class="feature-card"><h3>{escape(title)}</h3><p>{escape(copy)}</p></article>' for title, copy in data["cards"])
     regions = "".join(f'<span class="tag">{escape(region)}</span>' for region in data["regions"])
-    brand = brand_picture()
+    header_logo = header_brand()
+    footer_logo = footer_brand()
+    operator_nav = operator_navigation(data["slug"])
     return f'''<!doctype html>
 <html lang="en-CA">
 <head>
@@ -164,15 +189,15 @@ def page(data: dict) -> str:
   <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814a" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260814b">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20260814c">
   <script>window.dataLayer=window.dataLayer||[];</script>
 </head>
 <body class="operator-page operator-page-{data['slug']}">
   <a class="skip-link" href="#main">Skip to main content</a>
   <div class="preview-bar"><p>Private review site — tour details and tracking are awaiting client approval</p></div>
   <header class="site-header"><div class="shell nav">
-    <a class="brand" href="/" aria-label="Discount Coach Tours home">{brand}</a>
-    <nav aria-label="Primary navigation"><ul class="nav-links" data-nav-links><li><a href="/#operators">Other operators</a></li><li><a href="#why-choose">Why {short}</a></li><li><a href="#destinations">Destinations</a></li><li><a class="button button-accent" href="#enquire">Get {short} options</a></li></ul></nav>
+    {header_logo}
+    <nav aria-label="Tour operators"><ul class="nav-links" data-nav-links>{operator_nav}</ul></nav>
     <div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Use dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/></svg></button><button class="icon-button menu-button" type="button" data-menu-toggle aria-expanded="false" aria-label="Open menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
   </div></header>
   <main id="main">
@@ -192,8 +217,8 @@ def page(data: dict) -> str:
 
     {enquiry_form(data)}
   </main>
-  <footer class="site-footer"><div class="shell"><div class="footer-grid"><div><a class="brand" href="/">{brand}</a><p class="small footer-intro">Independent help comparing guided coach holidays from trusted tour operators.</p></div><div><h3>Tour operators</h3><ul class="footer-links"><li><a href="/trafalgar-tours.html">Trafalgar Tours</a></li><li><a href="/globus-journeys.html">Globus Journeys</a></li><li><a href="/cosmos-tours.html">Cosmos Tours</a></li><li><a href="/insight-vacations.html">Insight Vacations</a></li></ul></div><div><h3>Plan</h3><ul class="footer-links"><li><a href="#why-choose">Why {short}</a></li><li><a href="#enquire">Enquire now</a></li><li><a href="/privacy.html">Privacy</a></li></ul></div><div><h3>Contact</h3><ul class="footer-links"><li><a href="tel:+18779778586">1 (877) 977-8586</a></li><li><a href="mailto:sales@discountcoachtours.ca">sales@discountcoachtours.ca</a></li><li>1425 Osprey Drive, Unit 203<br>Ancaster, ON L9G 4V5</li></ul></div></div><div class="footer-bottom"><p>© <span data-current-year></span> Discount Coach Tours. TICO registration #50020475.</p><p>Tour operator names and marks belong to their respective owners.</p></div></div></footer>
-  <script src="/assets/js/site.js?v=20260814b" defer></script>
+  <footer class="site-footer"><div class="shell"><div class="footer-grid"><div>{footer_logo}<p class="small footer-intro">Independent help comparing guided coach holidays from trusted tour operators.</p></div><div><h3>Tour operators</h3><ul class="footer-links"><li><a href="/trafalgar-tours.html">Trafalgar Tours</a></li><li><a href="/globus-journeys.html">Globus Journeys</a></li><li><a href="/cosmos-tours.html">Cosmos Tours</a></li><li><a href="/insight-vacations.html">Insight Vacations</a></li></ul></div><div><h3>Plan</h3><ul class="footer-links"><li><a href="#why-choose">Why {short}</a></li><li><a href="#enquire">Enquire now</a></li><li><a href="/privacy.html">Privacy</a></li></ul></div><div><h3>Contact</h3><ul class="footer-links"><li><a href="tel:+18779778586">1 (877) 977-8586</a></li><li><a href="mailto:sales@discountcoachtours.ca">sales@discountcoachtours.ca</a></li><li>1425 Osprey Drive, Unit 203<br>Ancaster, ON L9G 4V5</li></ul></div></div><div class="footer-bottom"><p>© <span data-current-year></span> Discount Coach Tours. TICO registration #50020475.</p><p>Tour operator names and marks belong to their respective owners.</p></div></div></footer>
+  <script src="/assets/js/site.js?v=20260814c" defer></script>
 </body></html>'''
 
 
