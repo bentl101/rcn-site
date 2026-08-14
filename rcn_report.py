@@ -256,6 +256,41 @@ def _person_key(body):
     return f'o:{(body or {}).get("lead_order_id") or ""}'
 
 
+def _phone_is_quarantined(body, features):
+    """Mirror the live deterministic missing/invalid-phone policy."""
+    digits = ''.join(ch for ch in str((body or {}).get('phone') or '') if ch.isdigit())
+    if not digits:
+        return True
+    if features.get('phone_fictional') is True or features.get('phone_repeating') is True:
+        return True
+    verified = features.get('phone_valid_veriphone')
+    if verified is False:
+        return True
+    return verified is not True and features.get('phone_valid_shape') is not True
+
+
+def _email_is_invalid(body, features):
+    email = str((body or {}).get('email') or '').strip()
+    shape_ok = '@' in email and '.' in email.rsplit('@', 1)[-1]
+    return (not shape_ok
+            or features.get('email_mx_valid') is False
+            or features.get('email_mailbox_valid') is False
+            or features.get('email_disposable') is True
+            or features.get('email_disposable_reoon') is True)
+
+
+def _effective_decision(body, features, parsed_body):
+    """Apply today's contact policy to immutable historical execution data."""
+    original = str((parsed_body or {}).get('decision') or '?')
+    if not _phone_is_quarantined(body, features):
+        return original
+    if _email_is_invalid(body, features):
+        return 'suppress'
+    # Do not rescue an independently suppressed spam lead; only quarantine
+    # historical sends/reviews that had an invalid or missing phone.
+    return 'review' if original in {'send_to_sales', 'review'} else original
+
+
 def _person_aliases(body):
     """All stable contact aliases available for one submission."""
     aliases = []
@@ -322,15 +357,16 @@ def lead_breakdown(execs, start_d, end_d, action_execs=None, action_workflow=Non
     upload_outcomes, aliases = {}, {}
     for e in execs:
         rd = e.get('data', {}).get('resultData', {}).get('runData', {})
-        bf = _node(rd, 'Build Features')
+        bf = _node(rd, 'Build Signals') or _node(rd, 'Build Features')
         if not bf: continue
         b = bf.get('body', {})
+        features = bf.get('_features', {})
         dd = submitted_account_date(b)
         if dd is None: continue
         covered_min = dd if covered_min is None else min(covered_min, dd)
         if not (start_d <= dd <= end_d): continue
         ps = _node(rd, 'Parse Score') or {}; pb = ps.get('body', {})
-        dec = pb.get('decision', '?'); counts['total'] += 1
+        dec = _effective_decision(b, features, pb); counts['total'] += 1
         if dec in counts: counts[dec] += 1
         # "uploaded" now means GOOGLE ACCEPTED it — rejects (fake/test click IDs) don't count.
         if dec == 'send_to_sales' and b.get('click_id'):
@@ -375,7 +411,7 @@ def upload_failures(execs, start_d, end_d):
         if not up: continue
         try: resp = up[0]['data']['main'][0][0]['json']
         except Exception: continue
-        b = (_node(rd, 'Build Features') or {}).get('body', {})
+        b = ((_node(rd, 'Build Signals') or _node(rd, 'Build Features')) or {}).get('body', {})
         dd = submitted_account_date(b)
         if dd and not (start_d <= dd <= end_d): continue
         err = resp.get('error'); pfe = resp.get('partialFailureError')
@@ -600,12 +636,13 @@ def expected_good_with_click(execs, day_d):
     people, aliases = set(), {}
     for e in execs:
         rd = e.get('data', {}).get('resultData', {}).get('runData', {})
-        bf = _node(rd, 'Build Features')
+        bf = _node(rd, 'Build Signals') or _node(rd, 'Build Features')
         if not bf: continue
         b = bf.get('body', {})
         if submitted_account_date(b) != day_d: continue
         ps = _node(rd, 'Parse Score') or {}
-        if ps.get('body', {}).get('decision') == 'send_to_sales' and b.get('click_id'):
+        pb = ps.get('body', {})
+        if _effective_decision(b, bf.get('_features', {}), pb) == 'send_to_sales' and b.get('click_id'):
             people.add(_canonical_person(b, aliases))
     return len(people)
 
@@ -619,12 +656,13 @@ def expected_unique_click_groups(execs, day_d):
     rows = []
     for e in execs:
         rd = e.get('data', {}).get('resultData', {}).get('runData', {})
-        bf = _node(rd, 'Build Features')
+        bf = _node(rd, 'Build Signals') or _node(rd, 'Build Features')
         if not bf: continue
         b = bf.get('body', {})
         if submitted_account_date(b) != day_d: continue
         ps = _node(rd, 'Parse Score') or {}
-        if ps.get('body', {}).get('decision') == 'send_to_sales' and b.get('click_id'):
+        pb = ps.get('body', {})
+        if _effective_decision(b, bf.get('_features', {}), pb) == 'send_to_sales' and b.get('click_id'):
             rows.append(b)
     seen_people = set()
     for b in sorted(rows, key=lambda row: str(row.get('submitted_at') or '')):

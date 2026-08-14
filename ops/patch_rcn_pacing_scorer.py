@@ -537,6 +537,24 @@ def person_key(body: dict) -> str:
     return f"o:{body.get('lead_order_id') or ''}"
 
 
+def phone_is_quarantined(body: dict, features: dict) -> bool:
+    """Return the live policy result for missing or definitively invalid phones.
+
+    Veriphone ``true`` is authoritative for international numbers that do not
+    match the local NANP shape check. A verifier outage remains fail-open only
+    when the deterministic shape check passes.
+    """
+    digits = re.sub(r"\D+", "", str(body.get("phone") or ""))
+    if not digits:
+        return True
+    if features.get("phone_fictional") is True or features.get("phone_repeating") is True:
+        return True
+    verified = features.get("phone_valid_veriphone")
+    if verified is False:
+        return True
+    return verified is not True and features.get("phone_valid_shape") is not True
+
+
 def provisional_campaign_label(body: dict) -> str:
     label = str(body.get("campaign_label") or "").strip()
     if label:
@@ -578,15 +596,18 @@ def rebuild_today_people(api: N8nApi, workflow: dict) -> dict:
     qualifying: list[tuple[str, dict]] = []
     for execution in executions:
         run_data = execution.get("data", {}).get("resultData", {}).get("runData", {})
-        source = execution_node(run_data, "Build Features") or execution_node(run_data, "Build Signals")
+        source = execution_node(run_data, "Build Signals") or execution_node(run_data, "Build Features")
         parsed = execution_node(run_data, "Parse Score")
         if not source or not parsed:
             continue
         body = source.get("body") or {}
+        features = source.get("_features") or {}
         parsed_body = parsed.get("body") or {}
         if account_date(body) != today:
             continue
         if parsed_body.get("decision") != "send_to_sales" or not body.get("click_id"):
+            continue
+        if phone_is_quarantined(body, features):
             continue
         qualifying.append((str(body.get("submitted_at") or ""), body))
 
