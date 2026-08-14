@@ -118,6 +118,8 @@
   .nav-links a:not(.button):hover { color: var(--primary); }
   .nav-links a[aria-current="page"] { color: var(--primary); }
   .nav-actions { display: flex; align-items: center; gap: 0.5rem; }
+  .nav-actions > .header-callback { display: none; }
+  .callback-label-short { display: none; }
   .icon-button {
     display: inline-grid; width: 2.75rem; height: 2.75rem; place-items: center; border: 1px solid var(--line);
     border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--ink); cursor: pointer;
@@ -320,7 +322,7 @@
     .nav-links a:not(.button) { width: 100%; min-height: 3.6rem; padding-inline: 1rem; font-size: 1rem; }
     .nav-links a[aria-current="page"] { border-radius: var(--radius-sm); background: var(--primary-soft); }
     .nav-links .button { margin-block: 1rem; }
-    .nav-actions > .button { display: none; }
+    .nav-actions > .button:not(.header-callback) { display: none; }
   }
 
   @media (max-width: 47.99rem) {
@@ -332,7 +334,9 @@
     .header-brand .brand-mobile-mark { width: 3rem; height: 3rem; flex: 0 0 3rem; object-fit: contain; }
     .brand-mobile-copy { display: grid; min-width: 0; color: var(--ink); line-height: 1; }
     .brand-mobile-copy strong { font-size: 1rem; font-weight: 850; letter-spacing: -0.025em; white-space: nowrap; }
-    .brand-mobile-copy span { margin-top: 0.3rem; color: var(--primary); font-size: 0.64rem; font-weight: 850; letter-spacing: 0.2em; text-transform: uppercase; }
+    .brand-mobile-copy span { margin-top: 0.3rem; color: var(--primary); font-size: 0.62rem; font-weight: 850; letter-spacing: 0.13em; text-transform: uppercase; white-space: nowrap; }
+    .nav-actions .header-callback { display: inline-flex; min-height: 2.75rem; padding: 0.6rem 0.8rem; font-size: 0.78rem; white-space: nowrap; }
+    .header-callback .callback-icon { display: none; }
     .nav-actions [data-theme-toggle] { display: none; }
     .hero { min-height: 44rem; }
     .hero::before { background-position: 68% center; }
@@ -347,6 +351,11 @@
     .operator-hero { min-height: 45rem; }
     .operator-hero .cluster .button { width: 100%; }
     .operator-card { min-height: 0; }
+  }
+
+  @media (max-width: 22.49rem) {
+    .callback-label-long { display: none; }
+    .callback-label-short { display: inline; }
   }
 }
 

@@ -79,7 +79,7 @@ def header_brand() -> str:
       <img class="brand-image-desktop" src="/assets/images/dct-logo-horizontal.svg?v=20260814a" alt="Discount Coach Tours" width="1800" height="520">
       <span class="brand-lockup-mobile" aria-hidden="true">
         <img class="brand-mobile-mark" src="/assets/images/dct-logo-mark.svg?v=20260814a" alt="" width="1024" height="1024">
-        <span class="brand-mobile-copy"><strong>Discount Coach</strong><span>Tours</span></span>
+        <span class="brand-mobile-copy"><strong>Discount</strong><span>Coach Tours</span></span>
       </span>
     </a>'''
 
@@ -125,7 +125,6 @@ def enquiry_form(data: dict) -> str:
             <li>Discuss flights from your departure city</li>
             <li>No obligation to book</li>
           </ul>
-          <p class="small">Prefer to speak with someone? Call <a href="tel:+18779778586">1 (877) 977-8586</a>.</p>
         </aside>
 
         <div class="form-card operator-form-card">
@@ -189,7 +188,7 @@ def page(data: dict) -> str:
   <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814a" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260814c">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20260814d">
   <script>window.dataLayer=window.dataLayer||[];</script>
 </head>
 <body class="operator-page operator-page-{data['slug']}">
@@ -198,7 +197,7 @@ def page(data: dict) -> str:
   <header class="site-header"><div class="shell nav">
     {header_logo}
     <nav aria-label="Tour operators"><ul class="nav-links" data-nav-links>{operator_nav}</ul></nav>
-    <div class="nav-actions"><button class="icon-button" type="button" data-theme-toggle aria-label="Use dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/></svg></button><button class="icon-button menu-button" type="button" data-menu-toggle aria-expanded="false" aria-label="Open menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+    <div class="nav-actions"><a class="button button-accent header-callback" href="#enquire"><svg class="callback-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.2 11 11 0 0 0 3.6.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.6 21 3 13.4 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.3.2 2.5.6 3.6a1 1 0 0 1-.2 1Z"/></svg><span class="callback-label-long">Request Callback</span><span class="callback-label-short">Callback</span></a><button class="icon-button" type="button" data-theme-toggle aria-label="Use dark theme"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/></svg></button><button class="icon-button menu-button" type="button" data-menu-toggle aria-expanded="false" aria-label="Open menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
   </div></header>
   <main id="main">
     <section class="operator-hero"><div class="shell operator-hero-inner"><div class="operator-hero-copy">
@@ -206,7 +205,6 @@ def page(data: dict) -> str:
       <div class="operator-mark"><img src="/assets/images/{data['mark']}" alt="{name}" width="560" height="160"></div>
       <p class="eyebrow">{escape(data['eyebrow'])}</p><h1>{escape(data['headline'])}</h1><p class="lede">{escape(data['intro'])}</p>
       <div class="tag-row">{tags}</div><div class="cluster"><a class="button button-accent button-lg" href="#enquire">Get {short} tour options</a></div>
-      <p class="operator-contact">Or call <a href="tel:+18779778586">1 (877) 977-8586</a> if you prefer to talk.</p>
     </div></div></section>
 
     <section class="section" id="why-choose"><div class="shell grid-2"><div><p class="eyebrow">Is {short} right for you?</p><h2 class="spaced-heading">A guided journey with its own point of view</h2><p class="lede spaced-copy">{escape(data['summary'])}</p><p class="small spaced-note">{escape(data['fact'])}</p></div><div class="media-frame"><img src="/assets/images/{data['image']}" alt="Scenic {short} style coach touring" width="1200" height="900"></div></div></section>
