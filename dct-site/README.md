@@ -14,7 +14,11 @@ Static HTML/CSS/JS with a small PHP staging handler. It is intentionally marked 
 
 ## Logo pack
 
-Vector masters and high-resolution PNG exports are in `assets/images/`:
+The review site now uses Kiran's client-supplied original artwork:
+
+- `dct-logo-original.png` (2941 × 1558 high-resolution export)
+
+The earlier concept variants remain in `assets/images/` for reference:
 
 - `dct-logo-horizontal.svg` / `.png` (3000px-wide PNG)
 - `dct-logo-square.svg` / `.png` (2048 × 2048 PNG)
