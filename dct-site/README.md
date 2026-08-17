@@ -1,6 +1,6 @@
 # Discount Coach Tours review site
 
-Static HTML/CSS/JS with a small PHP staging handler. It is intentionally marked `noindex` and stores QA submissions in a Docker volume without emailing the client or writing to a CRM.
+Static HTML/CSS/JS with a small PHP staging handler, deployed at `https://book.discountcoachtours.ca/`. It is intentionally marked `noindex` and stores QA submissions privately without emailing the client or writing to a CRM. Docker deployments use the `dct_lead_data` volume; cPanel stores them outside the document root in `~/dct-private-data/`.
 
 ## Pages
 

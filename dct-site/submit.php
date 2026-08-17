@@ -66,7 +66,7 @@ $values = [
     substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500), 'staging'
 ];
 
-$dataDir = getenv('DCT_DATA_DIR') ?: '/var/www/data';
+$dataDir = getenv('DCT_DATA_DIR') ?: dirname(__DIR__) . '/dct-private-data';
 if (!is_dir($dataDir) && !mkdir($dataDir, 0770, true) && !is_dir($dataDir)) {
     error_log('DCT: unable to create private data directory');
     header('Location: /?form_error=server#enquire', true, 303);

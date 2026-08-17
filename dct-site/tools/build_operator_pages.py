@@ -180,7 +180,7 @@ def page(data: dict) -> str:
   <title>{name} | Discount Coach Tours</title>
   <meta name="description" content="Compare {name} guided coach tours with help from a coach tour specialist.">
   <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#2b123c">
-  <meta property="og:title" content="{name} | Discount Coach Tours"><meta property="og:description" content="Find a {short} guided tour that fits your destination, timing and budget."><meta property="og:image" content="https://dct.copperchunk.com/assets/images/{data['image']}"><meta name="twitter:card" content="summary_large_image">
+  <meta property="og:title" content="{name} | Discount Coach Tours"><meta property="og:description" content="Find a {short} guided tour that fits your destination, timing and budget."><meta property="og:image" content="https://book.discountcoachtours.ca/assets/images/{data['image']}"><meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814b" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
