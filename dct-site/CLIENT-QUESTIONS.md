@@ -1,33 +1,41 @@
-# Discount Coach Tours — client review questions
+# Discount Coach Tours — final sign-off checklist
 
-## The essentials
+Updated 21 August 2026. The review build is close to approval and is live at `https://book.discountcoachtours.ca/`.
 
-1. Which destinations and tour types should the site prioritize at launch: Europe, Canada/USA, worldwide, fly-coach, rail combinations, small groups or private groups?
-2. Are Trafalgar, Globus, Cosmos and Insight the complete launch list, and may we use their current brand marks and supplied photography?
-3. What should happen after an enquiry: who receives it, what CRM should it enter, and what response time can the website promise?
-4. Which fields must be required? In particular: phone, departure city, per-person budget, preferred month, pace and contact preference.
-5. Should the site advertise named discounts or simply invite visitors to compare current pricing and offers?
+## Confirmed and implemented
 
-## Form and sales qualification
+- Separate PPC landing pages and preselected forms for Trafalgar, Globus, Insight Vacations and Cosmos.
+- Operator-only navigation, with Insight positioned above Cosmos.
+- Client-supplied original DCT logo, including a responsive mobile treatment.
+- Official operator logo assets sourced from the operators' websites.
+- Form-led callback journey; phone remains available but is not the main call to action.
+- Client copy revisions, a minimum listed budget of $2,000 per person, and the supplied Edwin, Neveen and Candice testimonials.
+- Live cPanel domain and SSL at `book.discountcoachtours.ca`; the former Copperchunk review URL redirects here.
+- Private staging submission storage, `noindex` protection, security headers and blocked internal files.
 
-6. Should “travel date” capture one month, a date range, or “flexible by X weeks”?
-7. Do sales need room type, number of rooms, children and ages, solo status, mobility/accessibility needs, air requirements or travel insurance interest?
-8. Should group enquiries use a separate route and, if so, what minimum group size applies?
-9. Is WhatsApp/SMS an approved contact option, and what CASL consent language is required?
-10. Which enquiries count as a qualified advertising conversion: every valid form, a minimum budget/date window, or only a sales-approved lead?
+## Required before production launch
 
-## Brand, content and proof
+1. Confirm the priority destinations, tour types and any current promotions permitted at launch.
+2. Confirm who receives each enquiry, the CRM destination, notification email addresses and the response-time promise.
+3. Approve the final required form fields and any group-enquiry rules.
+4. Approve the DCT Google Ads account, GA4/GTM IDs, primary conversion definition, value, enhanced conversions and offline lead-quality feedback approach.
+5. Approve the production privacy policy, consent wording, data-retention period and cookie requirements.
+6. Confirm legal business details, TICO registration, contact details, operator artwork/trademark permission and any price or discount claims.
+7. Decide whether phone calls, brochure downloads and outbound operator clicks are secondary conversions.
+8. Record final desktop/mobile, content, legal and launch sign-off.
 
-11. Is the current DCT logo to be faithfully restored, or may this cleaner vector redraw become the new master?
-12. May the site reference the same Google Business Profile, rating and reviews currently shown by River Cruise Network?
-13. Confirm the legal business name, TICO number, address, toll-free number, email, business hours and any booking-fee or price-guarantee wording.
-14. Which current promotions, destinations and brochures may be featured, and who approves operator-specific copy?
-15. Is French-language content required for the Canadian launch?
+## Google Ads working recommendation
 
-## Launch and measurement
+- Create a separate **Discount Coach Tours** Google Ads client account.
+- Link it beneath the existing Copperchunk Ltd manager account (`381-427-8874`); a second manager account is unnecessary unless billing ownership or user access must be isolated.
+- Use DCT-specific conversion actions at launch rather than RCN's conversion actions, because the products, intent and lead economics differ.
+- Keep DCT and RCN keyword coverage distinct. Do not use separate accounts to enter the same auction for the same business intent.
+- The same payments profile may be reused if the same legal entity is responsible for both accounts, subject to the client's billing preference.
 
-16. Which domain should ultimately host the rebuild: `discountcoachtours.ca`, `www.discountcoachtours.ca` or `book.discountcoachtours.ca`?
-17. Confirm GA4, Google Ads and GTM ownership/IDs, conversion values and enhanced-conversion requirements.
-18. Confirm the production privacy policy, cookie-consent requirements, data retention period and client-approved processors.
-19. Should phone calls, brochure downloads and outbound operator clicks be tracked as secondary conversions?
-20. Who signs off desktop/mobile QA, operator trademark usage and the final launch?
+## Optional or post-launch decisions
+
+- Flexible date ranges instead of a single preferred month.
+- Additional room, child-age, solo-travel, air, insurance or accessibility fields.
+- A separate group-enquiry route and minimum group size.
+- WhatsApp/SMS follow-up with approved CASL consent language.
+- French-language content.
