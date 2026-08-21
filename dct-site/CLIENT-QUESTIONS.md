@@ -9,6 +9,7 @@ Updated 21 August 2026. The review build is close to approval and is live at `ht
 - Client-supplied original DCT logo, including a responsive mobile treatment.
 - Official operator logo assets sourced from the operators' websites.
 - Form-led callback journey; phone remains available but is not the main call to action.
+- Traveller dropdown confirmed as 1, 2, 3, 4 and 5+ travellers, with no combined 3–4 or separate group-enquiry option.
 - Client copy revisions, a minimum listed budget of $2,000 per person, and the supplied Edwin, Neveen and Candice testimonials.
 - Live cPanel domain and SSL at `book.discountcoachtours.ca`; the former Copperchunk review URL redirects here.
 - Private staging submission storage, `noindex` protection, security headers and blocked internal files.
@@ -17,7 +18,7 @@ Updated 21 August 2026. The review build is close to approval and is live at `ht
 
 1. Confirm the priority destinations, tour types and any current promotions permitted at launch.
 2. Confirm who receives each enquiry, the CRM destination, notification email addresses and the response-time promise.
-3. Approve the final required form fields and any group-enquiry rules.
+3. Approve any remaining form-field changes.
 4. Approve the DCT Google Ads account, GA4/GTM IDs, primary conversion definition, value, enhanced conversions and offline lead-quality feedback approach.
 5. Approve the production privacy policy, consent wording, data-retention period and cookie requirements.
 6. Confirm legal business details, TICO registration, contact details, operator artwork/trademark permission and any price or discount claims.
