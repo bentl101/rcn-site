@@ -107,7 +107,7 @@
     position: sticky; z-index: 100; top: 0; background: color-mix(in srgb, var(--surface) 92%, transparent);
     border-bottom: 1px solid color-mix(in srgb, var(--line) 78%, transparent); backdrop-filter: blur(18px);
   }
-  .desktop-trust-bar { display: none; }
+  .desktop-contact { display: none; }
   .nav { min-height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .brand {
     display: inline-flex; width: clamp(8.75rem, 13vw, 10.25rem); height: 4.7rem; padding: 0.16rem 0.28rem;
@@ -319,16 +319,15 @@
   }
 
   @media (min-width: 68.01rem) {
-    .desktop-trust-bar {
-      display: block; border-bottom: 1px solid var(--line); background: var(--primary-strong); color: var(--on-dark);
+    .desktop-contact {
+      display: grid; grid-template-columns: auto auto; align-items: center; gap: clamp(0.75rem, 1.25vw, 1.25rem);
+      padding-left: clamp(0.75rem, 1.25vw, 1.25rem); margin-left: auto; border-left: 1px solid var(--line);
     }
-    .desktop-trust-bar .shell {
-      display: grid; min-height: 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 2rem;
-    }
-    .desktop-trust-bar p { color: inherit; font-size: 0.78rem; font-weight: 750; letter-spacing: 0.01em; }
-    .desktop-trust-bar p:last-child { text-align: right; }
-    .desktop-trust-bar a { color: inherit; font-weight: 850; text-decoration: none; }
-    .desktop-trust-bar a:hover { text-decoration: underline; }
+    .desktop-contact p { color: var(--ink-soft); font-size: clamp(0.67rem, 0.72vw, 0.76rem); font-weight: 700; line-height: 1.35; }
+    .desktop-contact p:first-child { white-space: nowrap; }
+    .desktop-contact a { color: var(--primary); font-weight: 850; text-decoration: none; }
+    .desktop-contact a:hover { text-decoration: underline; }
+    .desktop-contact a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 0.15rem; }
   }
 
   @media (max-width: 68rem) {
