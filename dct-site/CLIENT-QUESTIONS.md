@@ -1,6 +1,6 @@
 # Discount Coach Tours — final sign-off checklist
 
-Updated 21 August 2026. The review build is close to approval and is live at `https://book.discountcoachtours.ca/`.
+Updated 3 September 2026. The review build is close to approval and is live at `https://book.discountcoachtours.ca/`.
 
 ## Confirmed and implemented
 
@@ -9,6 +9,7 @@ Updated 21 August 2026. The review build is close to approval and is live at `ht
 - Client-supplied original DCT logo, including a responsive mobile treatment.
 - Official operator logo assets sourced from the operators' websites.
 - Form-led callback journey; phone remains available but is not the main call to action.
+- Desktop-only trust bar with the toll-free number and weekday/weekend opening hours; mobile header remains unchanged.
 - Traveller dropdown confirmed as 1, 2, 3, 4 and 5+ travellers, with no combined 3–4 or separate group-enquiry option.
 - Client copy revisions, a minimum listed budget of $2,000 per person, and the supplied Edwin, Neveen and Candice testimonials.
 - Live cPanel domain and SSL at `book.discountcoachtours.ca`; the former Copperchunk review URL redirects here.

@@ -107,6 +107,7 @@
     position: sticky; z-index: 100; top: 0; background: color-mix(in srgb, var(--surface) 92%, transparent);
     border-bottom: 1px solid color-mix(in srgb, var(--line) 78%, transparent); backdrop-filter: blur(18px);
   }
+  .desktop-trust-bar { display: none; }
   .nav { min-height: var(--header-h); display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
   .brand {
     display: inline-flex; width: clamp(8.75rem, 13vw, 10.25rem); height: 4.7rem; padding: 0.16rem 0.28rem;
@@ -315,6 +316,19 @@
     .review-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .cta-band { grid-template-columns: minmax(0, 1fr) auto; }
     .footer-grid { grid-template-columns: 1.4fr repeat(3, 1fr); }
+  }
+
+  @media (min-width: 68.01rem) {
+    .desktop-trust-bar {
+      display: block; border-bottom: 1px solid var(--line); background: var(--primary-strong); color: var(--on-dark);
+    }
+    .desktop-trust-bar .shell {
+      display: grid; min-height: 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 2rem;
+    }
+    .desktop-trust-bar p { color: inherit; font-size: 0.78rem; font-weight: 750; letter-spacing: 0.01em; }
+    .desktop-trust-bar p:last-child { text-align: right; }
+    .desktop-trust-bar a { color: inherit; font-weight: 850; text-decoration: none; }
+    .desktop-trust-bar a:hover { text-decoration: underline; }
   }
 
   @media (max-width: 68rem) {
