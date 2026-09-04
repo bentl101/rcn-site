@@ -6,7 +6,6 @@ ErrorDocument 404 /404.html
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  Header always set X-Robots-Tag "noindex, nofollow"
   Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self'"
 
   <FilesMatch "\.(?:css|js|svg|png|webp)$">
@@ -23,7 +22,7 @@ ErrorDocument 404 /404.html
   ExpiresByType image/webp "access plus 7 days"
 </IfModule>
 
-<FilesMatch "^(?:docker-compose\.yml|nginx\.conf|php-production\.ini|\.dockerignore|CLIENT-QUESTIONS\.md|README\.md|leads.*\.csv)$">
+<FilesMatch "^(?:docker-compose\.yml|nginx\.conf|php-production\.ini|\.dockerignore|CLIENT-QUESTIONS\.md|README\.md|leads.*\.csv|dct-secrets\.php)$">
   Require all denied
 </FilesMatch>
 

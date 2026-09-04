@@ -1,43 +1,20 @@
-# Discount Coach Tours — final sign-off checklist
+# Discount Coach Tours — post-launch items
 
-Updated 3 September 2026. The review build is close to approval and is live at `https://book.discountcoachtours.ca/`.
+Updated 4 September 2026. The approved website is live at `https://book.discountcoachtours.ca/`.
 
-## Confirmed and implemented
+## Completed
 
-- Separate PPC landing pages and preselected forms for Trafalgar, Globus, Insight Vacations and Cosmos.
-- Operator-only navigation, with Insight positioned above Cosmos.
-- Client-supplied original DCT logo, including a responsive mobile treatment.
-- Official operator logo assets sourced from the operators' websites.
-- Form-led callback journey; phone remains available but is not the main call to action.
-- Desktop header includes the toll-free number and weekday/weekend opening hours within the existing white navigation area; mobile header remains unchanged.
-- Traveller dropdown confirmed as 1, 2, 3, 4 and 5+ travellers, with no combined 3–4 or separate group-enquiry option.
-- Client copy revisions, a minimum listed budget of $2,000 per person, and the supplied Edwin, Neveen and Candice testimonials.
-- Live cPanel domain and SSL at `book.discountcoachtours.ca`; the former Copperchunk review URL redirects here.
-- Private staging submission storage, `noindex` protection, security headers and blocked internal files.
+- Approved design, copy, contact details, operator pages, responsive logo and desktop header.
+- Production lead capture with private CSV source-of-truth and a dedicated secured n8n workflow.
+- Email routing to Discount Coach Tours sales, with Ben copied for monitoring.
+- Attribution capture for UTMs, click IDs, landing page, referrer, operator and device.
+- Public indexing, canonical URLs, robots.txt and sitemap.
 
-## Required before production launch
+## Still to confirm
 
-1. Confirm the priority destinations, tour types and any current promotions permitted at launch.
-2. Confirm who receives each enquiry, the CRM destination, notification email addresses and the response-time promise.
-3. Approve any remaining form-field changes.
-4. Approve the DCT Google Ads account, GA4/GTM IDs, primary conversion definition, value, enhanced conversions and offline lead-quality feedback approach.
-5. Approve the production privacy policy, consent wording, data-retention period and cookie requirements.
-6. Confirm legal business details, TICO registration, contact details, operator artwork/trademark permission and any price or discount claims.
-7. Decide whether phone calls, brochure downloads and outbound operator clicks are secondary conversions.
-8. Record final desktop/mobile, content, legal and launch sign-off.
+1. Which production CRM should receive DCT leads when the client migration is complete?
+2. Which active DCT Google Ads account will be used? The historical DCT account is cancelled.
+3. Supply or approve the DCT-specific GTM/GA4 and Google Ads conversion IDs.
+4. Confirm the retention period and deletion process for private lead records.
 
-## Google Ads working recommendation
-
-- Create a separate **Discount Coach Tours** Google Ads client account.
-- Link it beneath the existing Copperchunk Ltd manager account (`381-427-8874`); a second manager account is unnecessary unless billing ownership or user access must be isolated.
-- Use DCT-specific conversion actions at launch rather than RCN's conversion actions, because the products, intent and lead economics differ.
-- Keep DCT and RCN keyword coverage distinct. Do not use separate accounts to enter the same auction for the same business intent.
-- The same payments profile may be reused if the same legal entity is responsible for both accounts, subject to the client's billing preference.
-
-## Optional or post-launch decisions
-
-- Flexible date ranges instead of a single preferred month.
-- Additional room, child-age, solo-travel, air, insurance or accessibility fields.
-- A separate group-enquiry route and minimum group size.
-- WhatsApp/SMS follow-up with approved CASL consent language.
-- French-language content.
+Recommendation: keep DCT in a separate Google Ads client account under the existing Copperchunk manager account so its conversion data and bidding signals remain separate from River Cruise Network.

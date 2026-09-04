@@ -93,6 +93,9 @@
 
   const attribution = getAttribution();
   const pageStart = Date.now();
+  const deviceType = window.matchMedia('(max-width: 767px)').matches
+    ? 'mobile'
+    : window.matchMedia('(max-width: 1088px)').matches ? 'tablet' : 'desktop';
 
   forms.forEach((form) => {
     const operatorParam = new URLSearchParams(window.location.search).get('operator');
@@ -116,11 +119,15 @@
       const orderId = createOrderId();
       form.querySelector('[name="lead_order_id"]').value = orderId;
       form.querySelector('[name="time_on_page"]').value = Math.round((Date.now() - pageStart) / 1000);
+      const deviceField = form.querySelector('[name="device_type"]');
+      if (deviceField) deviceField.value = deviceType;
       Object.entries(attribution).forEach(([name, value]) => {
         const field = form.querySelector(`[name="${name}"]`);
         if (field) field.value = value;
       });
       sessionStorage.setItem('dct_lead_order_id', orderId);
+      sessionStorage.setItem('dct_lead_operator', operatorField?.value || 'Help me compare');
+      sessionStorage.setItem('dct_lead_source', form.querySelector('[name="source_page"]')?.value || '');
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: 'form_submission',
@@ -155,7 +162,21 @@
   const orderDisplay = document.querySelector('[data-order-id]');
   if (orderDisplay) {
     const orderId = sessionStorage.getItem('dct_lead_order_id');
-    if (orderId) orderDisplay.textContent = orderId;
+    if (orderId) {
+      orderDisplay.textContent = orderId;
+      const completeKey = `dct_complete_${orderId}`;
+      if (sessionStorage.getItem(completeKey) !== '1') {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          event: 'lead_form_complete',
+          form_name: 'dct_enquiry',
+          form_operator: sessionStorage.getItem('dct_lead_operator') || '',
+          form_source: sessionStorage.getItem('dct_lead_source') || '',
+          lead_order_id: orderId
+        });
+        sessionStorage.setItem(completeKey, '1');
+      }
+    }
     else orderDisplay.closest('[data-order-wrap]')?.remove();
   }
 })();
