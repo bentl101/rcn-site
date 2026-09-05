@@ -7,6 +7,7 @@ never printed. Mutating operations require the explicit ``--apply`` flag.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import pathlib
 import urllib.error
@@ -16,6 +17,25 @@ import urllib.request
 API_VERSION = "v25"
 API_ROOT = f"https://googleads.googleapis.com/{API_VERSION}"
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[3]
+TARGET_CUSTOMER_ID = "3639225242"
+TARGET_CUSTOMER_NAME = "Discount Coach Tours"
+FINAL_URL_SUFFIX = (
+    "utm_source=google&utm_medium=cpc&utm_campaign={campaignid}"
+    "&utm_term={keyword}&utm_content={creative}&utm_id={campaignid}"
+    "&matchtype={matchtype}&device={device}&network={network}"
+    "&adgroupid={adgroupid}&targetid={targetid}"
+    "&loc_physical={loc_physical_ms}&loc_interest={loc_interest_ms}"
+)
+ACTION_SPECS = {
+    "gclid": {
+        "name": "DCT - Submit Lead Form (Offline - GCLID)",
+        "countingType": "ONE_PER_CLICK",
+    },
+    "braid": {
+        "name": "DCT - Submit Lead Form (Offline - Braid)",
+        "countingType": "MANY_PER_CLICK",
+    },
+}
 
 
 def load_env() -> dict[str, str]:
@@ -112,6 +132,7 @@ def inspect_customer(env: dict[str, str], token: str, customer_id: str) -> dict:
                customer.auto_tagging_enabled, customer.final_url_suffix,
                customer.conversion_tracking_setting.accepted_customer_data_terms,
                customer.conversion_tracking_setting.enhanced_conversions_for_leads_enabled,
+               customer.conversion_tracking_setting.conversion_tracking_status,
                customer.conversion_tracking_setting.google_ads_conversion_customer
         FROM customer
     """)
@@ -139,27 +160,185 @@ def inspect_customer(env: dict[str, str], token: str, customer_id: str) -> dict:
         """)
     except RuntimeError as exc:
         billing_rows = [{"query_error": str(exc)}]
+    try:
+        access_rows = search(env, token, customer_id, """
+            SELECT customer_user_access.user_id,
+                   customer_user_access.email_address,
+                   customer_user_access.access_role,
+                   customer_user_access.access_creation_date_time,
+                   customer_user_access.inviter_user_email_address
+            FROM customer_user_access
+        """)
+    except RuntimeError as exc:
+        access_rows = [{"query_error": str(exc)}]
+    try:
+        invitation_rows = search(env, token, customer_id, """
+            SELECT customer_user_access_invitation.invitation_id,
+                   customer_user_access_invitation.email_address,
+                   customer_user_access_invitation.access_role,
+                   customer_user_access_invitation.creation_date_time
+            FROM customer_user_access_invitation
+        """)
+    except RuntimeError as exc:
+        invitation_rows = [{"query_error": str(exc)}]
     return {
         "customer_id": customer_id.replace("-", ""),
         "customer": customer_rows[0].get("customer", {}) if customer_rows else {},
         "campaigns": [row.get("campaign", {}) for row in campaign_rows],
         "conversion_actions": [row.get("conversionAction", {}) for row in action_rows],
         "billing_setups": [row.get("billingSetup", row) for row in billing_rows],
+        "user_access": [row.get("customerUserAccess", row) for row in access_rows],
+        "user_invitations": [row.get("customerUserAccessInvitation", row) for row in invitation_rows],
+    }
+
+
+def customer_update_operation(current: dict) -> dict | None:
+    update = {"resourceName": f"customers/{TARGET_CUSTOMER_ID}"}
+    mask: list[str] = []
+    desired = {
+        "descriptiveName": TARGET_CUSTOMER_NAME,
+        "autoTaggingEnabled": True,
+        "finalUrlSuffix": FINAL_URL_SUFFIX,
+    }
+    for field, value in desired.items():
+        if current.get(field) != value:
+            update[field] = value
+            mask.append(field)
+    if not mask:
+        return None
+    return {"update": update, "updateMask": ",".join(mask)}
+
+
+def action_payload(spec: dict) -> dict:
+    return {
+        "name": spec["name"],
+        "type": "UPLOAD_CLICKS",
+        "category": "SUBMIT_LEAD_FORM",
+        "status": "ENABLED",
+        "countingType": spec["countingType"],
+        "primaryForGoal": True,
+        "clickThroughLookbackWindowDays": "90",
+        "valueSettings": {
+            "defaultValue": 50,
+            "defaultCurrencyCode": "CAD",
+            "alwaysUseDefaultValue": True,
+        },
+    }
+
+
+def ensure_configuration(env: dict[str, str], token: str, *, apply: bool) -> dict:
+    before = inspect_customer(env, token, TARGET_CUSTOMER_ID)
+    customer_operation = customer_update_operation(before["customer"])
+    result: dict = {
+        "mode": "apply" if apply else "validate_only",
+        "customer_update": "unchanged" if customer_operation is None else "pending",
+        "conversion_actions": {},
+    }
+
+    if customer_operation is not None:
+        status, payload = request_json(
+            env,
+            token,
+            "POST",
+            f"{API_ROOT}/customers/{TARGET_CUSTOMER_ID}:mutate",
+            {"operation": customer_operation, "validateOnly": not apply},
+        )
+        if status != 200:
+            raise RuntimeError(
+                f"Customer update failed ({status}): "
+                f"{payload.get('error', {}).get('message', 'unknown error')}"
+            )
+        result["customer_update"] = "applied" if apply else "validated"
+
+    by_name = {item.get("name"): item for item in before["conversion_actions"]}
+    for key, spec in ACTION_SPECS.items():
+        existing = by_name.get(spec["name"])
+        if existing:
+            if existing.get("type") != "UPLOAD_CLICKS":
+                raise RuntimeError(f"Existing action {spec['name']!r} has immutable type {existing.get('type')!r}")
+            result["conversion_actions"][key] = {
+                "status": "existing",
+                "resourceName": existing.get("resourceName"),
+                "id": existing.get("id"),
+            }
+            continue
+        status, payload = request_json(
+            env,
+            token,
+            "POST",
+            f"{API_ROOT}/customers/{TARGET_CUSTOMER_ID}/conversionActions:mutate",
+            {
+                "operations": [{"create": action_payload(spec)}],
+                "validateOnly": not apply,
+                "responseContentType": "MUTABLE_RESOURCE",
+            },
+        )
+        if status != 200 or payload.get("partialFailureError"):
+            message = payload.get("error", {}).get("message") or payload.get("partialFailureError", {}).get("message")
+            raise RuntimeError(f"Conversion action {key} failed ({status}): {message or 'unknown error'}")
+        created = (payload.get("results") or [{}])[0]
+        result["conversion_actions"][key] = {
+            "status": "created" if apply else "validated",
+            "resourceName": created.get("resourceName"),
+        }
+
+    if apply:
+        result["post_state"] = inspect_customer(env, token, TARGET_CUSTOMER_ID)
+    return result
+
+
+def validate_upload(env: dict[str, str], token: str, action: dict) -> dict:
+    now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    stamp = now.strftime("%Y-%m-%d %H:%M:%S+00:00")
+    status, payload = request_json(
+        env,
+        token,
+        "POST",
+        f"{API_ROOT}/customers/{TARGET_CUSTOMER_ID}:uploadClickConversions",
+        {
+            "conversions": [{
+                "gclid": "DCT_API_VALIDATION_ONLY_NOT_A_REAL_CLICK",
+                "conversionAction": action["resourceName"],
+                "conversionDateTime": stamp,
+                "conversionValue": 50,
+                "currencyCode": "CAD",
+                "orderId": f"DCT-VALIDATE-{now.strftime('%Y%m%d%H%M%S')}",
+            }],
+            "partialFailure": True,
+            "validateOnly": True,
+        },
+    )
+    return {
+        "http_status": status,
+        "partial_failure": payload.get("partialFailureError"),
+        "rpc_error": payload.get("error"),
+        "results_returned": len(payload.get("results", [])),
     }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--apply", action="store_true", help="reserved for explicit configuration changes")
+    parser.add_argument("--apply", action="store_true", help="apply idempotent DCT account configuration")
+    parser.add_argument("--validate-config", action="store_true", help="validate configuration mutations without applying")
+    parser.add_argument("--validate-upload", action="store_true", help="validate an offline upload without recording it")
     parser.add_argument("--customer-id", help="inspect one Google Ads customer")
     args = parser.parse_args()
-    if args.apply:
-        raise SystemExit("Apply mode is not implemented until the target account has been inspected.")
     env = load_env()
     token = oauth_token(env)
     status, accessible = request_json(env, token, "GET", f"{API_ROOT}/customers:listAccessibleCustomers")
     if status != 200:
         raise SystemExit(f"API {API_VERSION} access failed: HTTP {status}")
+    if args.apply or args.validate_config:
+        print(json.dumps(ensure_configuration(env, token, apply=args.apply), indent=2))
+        return
+    if args.validate_upload:
+        state = inspect_customer(env, token, TARGET_CUSTOMER_ID)
+        by_name = {item.get("name"): item for item in state["conversion_actions"]}
+        action = by_name.get(ACTION_SPECS["gclid"]["name"])
+        if not action:
+            raise SystemExit("GCLID offline action does not exist; run --apply first")
+        print(json.dumps(validate_upload(env, token, action), indent=2))
+        return
     if args.customer_id:
         print(json.dumps(inspect_customer(env, token, args.customer_id), indent=2))
         return

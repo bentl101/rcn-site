@@ -8,6 +8,14 @@
   const forms = document.querySelectorAll('[data-lead-form]');
   const storageKey = 'dct_theme';
   const attributionKey = 'dct_attribution';
+  const attributionCookie = 'dct_attr';
+  const attributionMaxAge = 60 * 60 * 24 * 90;
+  const attributionFields = [
+    'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+    'matchtype', 'gad_device', 'network', 'adgroupid', 'targetid', 'loc_physical',
+    'loc_interest', 'gclid', 'gbraid', 'wbraid', 'click_id', 'click_id_type',
+    'landing_page', 'referrer'
+  ];
 
   const icons = {
     light: '<path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/>',
@@ -51,33 +59,125 @@
     if (window.innerWidth > 1088) closeMenu();
   });
 
-  function getAttribution() {
-    const params = new URLSearchParams(window.location.search);
-    const clickTypes = ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid'];
-    let saved = {};
-    try { saved = JSON.parse(sessionStorage.getItem(attributionKey) || '{}'); } catch (_) { saved = {}; }
+  function readAttributionCookie() {
+    const match = document.cookie.match(/(?:^|;\s*)dct_attr=([^;]*)/);
+    if (!match) return {};
+    try { return JSON.parse(decodeURIComponent(match[1])) || {}; } catch (_) { return {}; }
+  }
 
-    const current = {
-      utm_source: params.get('utm_source') || saved.utm_source || '',
-      utm_medium: params.get('utm_medium') || saved.utm_medium || '',
-      utm_campaign: params.get('utm_campaign') || saved.utm_campaign || '',
-      utm_term: params.get('utm_term') || saved.utm_term || '',
-      utm_content: params.get('utm_content') || saved.utm_content || '',
-      landing_page: saved.landing_page || window.location.href,
-      referrer: saved.referrer || document.referrer,
-      click_id: saved.click_id || '',
-      click_id_type: saved.click_id_type || ''
-    };
+  function readAttributionSession() {
+    try { return JSON.parse(sessionStorage.getItem(attributionKey) || '{}') || {}; }
+    catch (_) { return {}; }
+  }
 
-    for (const type of clickTypes) {
-      if (params.get(type)) {
-        current.click_id = params.get(type);
-        current.click_id_type = type;
+  function writeAttribution(attribution) {
+    const value = JSON.stringify(attribution);
+    try { sessionStorage.setItem(attributionKey, value); } catch (_) {}
+    try {
+      const secure = window.location.protocol === 'https:' ? ';Secure' : '';
+      document.cookie = `${attributionCookie}=${encodeURIComponent(value)};path=/;max-age=${attributionMaxAge};SameSite=Lax${secure}`;
+    } catch (_) {}
+  }
+
+  function mergeFirstTouch(target, source) {
+    attributionFields.forEach((key) => {
+      if (!target[key] && source[key]) target[key] = source[key];
+    });
+    return target;
+  }
+
+  function hasCampaignAttribution(values) {
+    return [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+      'matchtype', 'gad_device', 'network', 'adgroupid', 'targetid', 'loc_physical',
+      'loc_interest', 'gclid', 'gbraid', 'wbraid', 'click_id'
+    ].some((key) => Boolean(values[key]));
+  }
+
+  function applyLatestCampaign(target, latest, landingUrl, referrer) {
+    if (!hasCampaignAttribution(latest)) return target;
+
+    // A fresh campaign visit must supersede an older stored paid-click bundle.
+    // Otherwise a 90-day-old click ID could be uploaded for a newer ad visit.
+    const campaignFields = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+      'matchtype', 'gad_device', 'network', 'adgroupid', 'targetid', 'loc_physical',
+      'loc_interest', 'gclid', 'gbraid', 'wbraid', 'click_id', 'click_id_type'
+    ];
+    campaignFields.forEach((key) => { delete target[key]; });
+    Object.assign(target, latest);
+    target.landing_page = landingUrl;
+    target.referrer = referrer || 'direct';
+    return target;
+  }
+
+  function parseAttribution(url) {
+    let params;
+    try { params = new URL(url, window.location.origin).searchParams; }
+    catch (_) { return {}; }
+
+    const parsed = {};
+    const directFields = [
+      'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+      'matchtype', 'network', 'adgroupid', 'targetid', 'loc_physical', 'loc_interest'
+    ];
+    directFields.forEach((key) => {
+      const value = params.get(key);
+      if (value) parsed[key] = value;
+    });
+    const adsDevice = params.get('device');
+    if (adsDevice) parsed.gad_device = adsDevice;
+
+    // Keep Google click identifiers individually. A URL can legitimately carry
+    // both gclid and gbraid, while click_id remains a backwards-compatible key.
+    ['gclid', 'gbraid', 'wbraid'].forEach((key) => {
+      const value = params.get(key);
+      if (value) parsed[key] = value;
+    });
+    for (const type of ['gclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'ttclid']) {
+      const value = params.get(type);
+      if (value) {
+        parsed.click_id = value;
+        parsed.click_id_type = type;
         break;
       }
     }
+    return parsed;
+  }
 
-    sessionStorage.setItem(attributionKey, JSON.stringify(current));
+  function getAttribution() {
+    // Restore durable visit context, then let a fresh campaign visit replace the
+    // stored click bundle so an older ad ID can never override a newer one.
+    const current = mergeFirstTouch({}, readAttributionCookie());
+    mergeFirstTouch(current, readAttributionSession());
+    const fromCurrentUrl = parseAttribution(window.location.href);
+    applyLatestCampaign(current, fromCurrentUrl, window.location.href, document.referrer);
+
+    if (!current.landing_page) current.landing_page = window.location.href;
+    if (!current.referrer) current.referrer = document.referrer || 'direct';
+
+    if (!hasCampaignAttribution(fromCurrentUrl) && !current.click_id && document.referrer) {
+      try {
+        const referrerUrl = new URL(document.referrer);
+        if (referrerUrl.origin === window.location.origin) {
+          const fromReferrer = parseAttribution(referrerUrl.href);
+          applyLatestCampaign(current, fromReferrer, referrerUrl.href, 'direct');
+        }
+      } catch (_) {}
+    }
+
+    // Recover the generic pair if an older store contains only an individual ID.
+    if (!current.click_id) {
+      for (const type of ['gclid', 'gbraid', 'wbraid']) {
+        if (current[type]) {
+          current.click_id = current[type];
+          current.click_id_type = type;
+          break;
+        }
+      }
+    }
+
+    writeAttribution(current);
     return current;
   }
 
@@ -121,6 +221,10 @@
       form.querySelector('[name="time_on_page"]').value = Math.round((Date.now() - pageStart) / 1000);
       const deviceField = form.querySelector('[name="device_type"]');
       if (deviceField) deviceField.value = deviceType;
+      const languageField = form.querySelector('[name="browser_language"]');
+      if (languageField) languageField.value = navigator.language || '';
+      const pageLoadField = form.querySelector('[name="page_load_time"]');
+      if (pageLoadField) pageLoadField.value = String(pageStart);
       Object.entries(attribution).forEach(([name, value]) => {
         const field = form.querySelector(`[name="${name}"]`);
         if (field) field.value = value;
