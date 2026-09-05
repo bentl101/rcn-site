@@ -116,20 +116,22 @@ const conversion = {{
   conversionEnvironment: 'WEB',
   orderId: String(lead.lead_order_id || '')
 }};
-// Current Google guidance explicitly permits GCLID+GBRAID together, but not
-// GCLID+WBRAID. Use only WBRAID for the latter case.
-if (gclid && braidType !== 'wbraid') conversion.gclid = gclid;
+const eclRequested = String(lead.ads_ecl_allowed || '') === '1';
+const identifiers = [];
+if (eclRequested && lead.hashed_email) identifiers.push({{hashedEmail: String(lead.hashed_email)}});
+if (eclRequested && lead.hashed_phone) identifiers.push({{hashedPhoneNumber: String(lead.hashed_phone)}});
+const eclAllowed = eclRequested && identifiers.length > 0;
+// Legacy click-only imports require exactly one click identifier. Google's
+// enhanced-conversions guide permits GCLID+GBRAID together, so retain both
+// only after the ECL data terms/disclosure gate has been enabled. GCLID is
+// never combined with WBRAID.
+if (gclid && (!braidType || (eclAllowed && braidType === 'gbraid'))) conversion.gclid = gclid;
 if (braidType) conversion[braidType] = braidValue;
 
 // Enhanced-conversion identifiers are deliberately gated. The PHP handler
 // does not set ads_ecl_allowed until DCT approves the disclosure and Google
 // Customer Data Terms; click-ID uploads work without it.
-if (String(lead.ads_ecl_allowed || '') === '1') {{
-  const identifiers = [];
-  if (lead.hashed_email) identifiers.push({{hashedEmail: String(lead.hashed_email)}});
-  if (lead.hashed_phone) identifiers.push({{hashedPhoneNumber: String(lead.hashed_phone)}});
-  if (identifiers.length) conversion.userIdentifiers = identifiers;
-}}
+if (eclAllowed) conversion.userIdentifiers = identifiers;
 
 return [{{json: {{
   ...lead,

@@ -10,7 +10,7 @@ Updated 5 September 2026. The approved website is live at `https://book.discount
 - Attribution capture for UTMs, click IDs, landing page, referrer, operator and device.
 - Public indexing, canonical URLs, robots.txt and sitemap.
 - Google Ads account selection: retain `363-922-5242`; accidental duplicate `536-272-2800` is cancelled and can be reactivated if ever needed.
-- Google Ads API v25 setup and n8n offline-upload code prepared with separate GCLID and braid conversion paths, validate-only QA and failure alerts.
+- Google Ads API v25 offline uploads are live in the retained account, with separate GCLID and braid conversion actions, validate-only QA, partial-failure detection and Ben-only failure alerts. Synthetic end-to-end tests passed without recording a conversion.
 
 ## Still to confirm
 
