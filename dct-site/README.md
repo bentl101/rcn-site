@@ -19,7 +19,7 @@ Static HTML/CSS/JS with a PHP lead handler, live at `https://book.discountcoacht
 
 ## Google Ads API status
 
-The integration targets Google Ads API `v25`, the current major REST version as of 5 September 2026. Google released the `v25.1` client-library/schema update on 19 August, but REST endpoints remain `/v25`. Version 25 is scheduled to sunset in August 2027. Upload requests always use `partialFailure: true`, inspect `partialFailureError` before `results`, use Google-compatible space-separated timestamps, and support `validateOnly` QA without recording a conversion.
+The integration targets Google Ads API `v25`, the current major REST version as of 5 September 2026. Google released the `v25.1` client-library/schema update on 19 August, but REST endpoints remain `/v25`. Version 25 is scheduled to sunset in August 2027. Upload requests always use `partialFailure: true`, inspect `partialFailureError` before `results`, use Google-compatible space-separated timestamps, identify the conversion environment as `WEB`, and support `validateOnly` QA without recording a conversion. The payload allows Google's documented GCLID+GBRAID combination but never sends GCLID with WBRAID or GBRAID with WBRAID.
 
 Google's post-15-June-2026 offline-upload eligibility change should not block Copperchunk's developer token because the same token already has successful RCN upload history. A live validate-only call is still required after the DCT actions are created; newly created actions may return `TOO_RECENT_CONVERSION_ACTION` during Google's six-hour activation window.
 

@@ -95,7 +95,11 @@ def search(env: dict[str, str], token: str, customer_id: str, query: str) -> lis
         {"query": query},
     )
     if status != 200:
-        raise RuntimeError(f"Google Ads search failed ({status}): {payload.get('error', {}).get('message', 'unknown error')}")
+        if isinstance(payload, dict):
+            message = payload.get("error", {}).get("message", "unknown error")
+        else:
+            message = json.dumps(payload, separators=(",", ":"))[:1000]
+        raise RuntimeError(f"Google Ads search failed ({status}): {message}")
     rows: list[dict] = []
     for batch in payload:
         rows.extend(batch.get("results", []))
@@ -302,6 +306,7 @@ def validate_upload(env: dict[str, str], token: str, action: dict) -> dict:
                 "conversionDateTime": stamp,
                 "conversionValue": 50,
                 "currencyCode": "CAD",
+                "conversionEnvironment": "WEB",
                 "orderId": f"DCT-VALIDATE-{now.strftime('%Y%m%d%H%M%S')}",
             }],
             "partialFailure": True,

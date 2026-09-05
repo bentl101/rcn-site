@@ -113,9 +113,12 @@ const conversion = {{
   conversionDateTime,
   conversionValue: 50,
   currencyCode: 'CAD',
+  conversionEnvironment: 'WEB',
   orderId: String(lead.lead_order_id || '')
 }};
-if (gclid) conversion.gclid = gclid;
+// Current Google guidance explicitly permits GCLID+GBRAID together, but not
+// GCLID+WBRAID. Use only WBRAID for the latter case.
+if (gclid && braidType !== 'wbraid') conversion.gclid = gclid;
 if (braidType) conversion[braidType] = braidValue;
 
 // Enhanced-conversion identifiers are deliberately gated. The PHP handler
