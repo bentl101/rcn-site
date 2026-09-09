@@ -9,7 +9,7 @@ Static HTML/CSS/JS with a PHP lead handler, live at `https://book.discountcoacht
 - `submit.php` writes every valid lead to `~/dct-private-data/leads.csv` before calling n8n.
 - Delivery attempts are audited in `~/dct-private-data/n8n-deliveries.csv`.
 - The dedicated n8n webhook is `/webhook/dct-form`, protected by `X-DCT-Token`.
-- Production emails route to `sales@discountcoachtours.ca` and `btl101@gmail.com`; QA submissions (`qa_test=1`) route only to Ben.
+- Production emails route to `sales@rivercruisenetwork.com`; QA submissions (`qa_test=1`) route only to Ben.
 - UTMs, Google ValueTrack fields, separate GCLID/GBRAID/WBRAID values, landing page, referrer, operator, source page, device and time on page are captured. A first-party 90-day attribution cookie preserves the visit across pages, while a newer campaign visit replaces an older stored click bundle.
 - Email and phone are normalized and SHA-256 hashed server-side for a future Enhanced Conversions for Leads rollout. Those identifiers are not sent to Google until DCT approves the disclosure and accepts Google's Customer Data Terms.
 - The retained Google Ads client is `363-922-5242` under Copperchunk MCC `381-427-8874`. The later accidental duplicate `536-272-2800` was cancelled on 5 September 2026.

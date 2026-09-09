@@ -201,7 +201,7 @@ def workflow(gclid_action_id: str, braid_action_id: str) -> dict:
         {
             "parameters": {
                 "fromEmail": "ben@copperchunk.com",
-                "toEmail": "={{ $json.is_qa ? 'btl101@gmail.com' : 'sales@discountcoachtours.ca, btl101@gmail.com' }}",
+                "toEmail": "={{ $json.is_qa ? 'btl101@gmail.com' : 'sales@rivercruisenetwork.com' }}",
                 "subject": "={{ $json.email_subject }}", "emailFormat": "html",
                 "html": "={{ $json.email_html }}", "options": {"replyTo": "={{ $json.email }}"},
             },
