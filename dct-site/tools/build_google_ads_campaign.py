@@ -136,6 +136,23 @@ OPERATOR_SPECS = [
 ]
 
 
+GENERIC_DESTINATIONS = [
+    "Europe", "England", "Britain", "Scotland", "Ireland", "Italy", "Sicily",
+    "Greece", "Spain", "France", "Croatia", "Portugal", "Scandinavian Countries",
+    "Germany", "Switzerland", "Netherlands", "Holland", "Austria", "Hungary",
+    "Czech Republic", "Prague", "Budapest", "Turkey", "Japan", "Egypt", "Africa",
+    "South Africa", "Peru",
+]
+
+
+def generic_destination_broad_terms() -> list[tuple[str, str]]:
+    return [
+        (f"{destination} {suffix}", "BROAD")
+        for destination in GENERIC_DESTINATIONS
+        for suffix in ("coach tours", "bus tours")
+    ]
+
+
 def build_groups() -> list[dict[str, Any]]:
     groups: list[dict[str, Any]] = []
     for spec in OPERATOR_SPECS:
@@ -192,10 +209,7 @@ def build_groups() -> list[dict[str, Any]]:
             "url": f"{BASE}/",
             "path1": "coach-tours",
             "path2": "compare",
-            "keywords": [
-                ("coach tours", "BROAD"),
-                ("bus tours", "BROAD"),
-            ],
+            "keywords": generic_destination_broad_terms(),
             "headlines": [
                 "Guided Coach Tours Canada", "Compare Coach Tour Options",
                 "Find Your Best-Fit Tour", "Trusted Tour Operators",
