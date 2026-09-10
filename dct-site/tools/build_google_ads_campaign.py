@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from typing import Any
 
 import google_ads_offline as ads
@@ -12,6 +13,13 @@ CID = "3639225242"
 CAMPAIGN = "DCT | Search | Canada | Operators | 2026"
 BUDGET = "DCT | Search | Canada | 150 CAD per day"
 BASE = "https://book.discountcoachtours.ca"
+
+# Account-level negative lists, attached to the campaign rather than held as
+# campaign criteria. Managed by tools/consolidate_google_ads_negatives.py.
+NEGATIVE_SHARED_SETS = [
+    "DCT | Global Country Negatives",
+    "DCT | Global Search Exclusions",
+]
 
 
 def pairs(terms: list[str]) -> list[tuple[str, str]]:
@@ -154,73 +162,85 @@ def generic_destination_broad_terms() -> list[tuple[str, str]]:
 
 
 def build_groups() -> list[dict[str, Any]]:
+    """One ad group per operator.
+
+    The paired "Brand & Tours" / "Destinations" groups were merged on
+    10 September 2026 (see tools/consolidate_google_ads_ad_groups.py). Both
+    keyword sets and both RSAs now live in a single group per operator so a
+    small daily budget is not split eight ways. Each group keeps two ads,
+    distinguished by path2, so the destination-led creative still runs.
+    """
     groups: list[dict[str, Any]] = []
     for spec in OPERATOR_SPECS:
         url = f"{BASE}/{spec['slug']}"
         path = spec["short"].lower()
-        groups.extend([
-            {
-                "name": f"DCT | {spec['short']} | Brand & Tours",
-                "status": "ENABLED",
-                "url": url,
-                "path1": path,
-                "path2": "tour-options",
-                "keywords": pairs(spec["brand"]),
-                "headlines": spec["brand_heads"] + COMMON,
-                "descriptions": desc(spec["operator"]),
-            },
-            {
-                "name": f"DCT | {spec['short']} | Destinations",
-                "status": "ENABLED",
-                "url": url,
-                "path1": path,
-                "path2": "destinations",
-                "keywords": pairs(spec["dest"]),
-                "headlines": spec["dest_heads"] + COMMON,
-                "descriptions": desc(spec["operator"]),
-            },
-        ])
+        groups.append({
+            "name": f"DCT | {spec['short']}",
+            "status": "ENABLED",
+            "url": url,
+            "keywords": pairs(spec["brand"]) + pairs(spec["dest"]),
+            "ads": [
+                {
+                    "path1": path,
+                    "path2": "tour-options",
+                    "headlines": spec["brand_heads"] + COMMON,
+                    "descriptions": desc(spec["operator"]),
+                },
+                {
+                    "path1": path,
+                    "path2": "destinations",
+                    "headlines": spec["dest_heads"] + COMMON,
+                    "descriptions": desc(spec["operator"]),
+                },
+            ],
+        })
     groups.extend([
         {
             "name": "DCT | Brand",
             "status": "ENABLED",
             "url": f"{BASE}/",
-            "path1": "coach-tours",
-            "path2": "tour-options",
             "keywords": pairs([
                 "discount coach tours",
                 "discountcoachtours",
             ]),
-            "headlines": [
-                "Discount Coach Tours", "Compare Trusted Tour Brands",
-                "Guided Holiday Planning", "Find Your Best-Fit Tour",
-                "Travel Planning Made Easier", *COMMON,
-            ],
-            "descriptions": [
-                "Compare guided holidays from trusted tour operators with personal planning help.",
-                "Tell us your destination, dates and budget. We'll suggest suitable coach tour options.",
-                "Ask a coach tour specialist for current itineraries. Your enquiry is obligation-free.",
-                "Explore Trafalgar, Globus, Insight and Cosmos tours with a TICO registered agency.",
-            ],
+            "ads": [{
+                "path1": "coach-tours",
+                "path2": "tour-options",
+                "headlines": [
+                    "Discount Coach Tours", "Compare Trusted Tour Brands",
+                    "Guided Holiday Planning", "Find Your Best-Fit Tour",
+                    "Travel Planning Made Easier", *COMMON,
+                ],
+                "descriptions": [
+                    "Compare guided holidays from trusted tour operators with personal planning help.",
+                    "Tell us your destination, dates and budget. We'll suggest suitable coach tour options.",
+                    "Ask a coach tour specialist for current itineraries. Your enquiry is obligation-free.",
+                    "Explore Trafalgar, Globus, Insight and Cosmos tours with a TICO registered agency.",
+                ],
+            }],
         },
         {
-            "name": "DCT | Generic Coach Tours | Broad Test",
+            # Live name is "... | HOLD". Keep it in sync or the builder will
+            # create a second, duplicate generic group alongside the real one.
+            "name": "DCT | Generic Coach Tours | HOLD",
             "status": "ENABLED",
             "url": f"{BASE}/",
-            "path1": "coach-tours",
-            "path2": "compare",
             "keywords": generic_destination_broad_terms(),
-            "headlines": [
-                "Guided Coach Tours Canada", "Compare Coach Tour Options",
-                "Find Your Best-Fit Tour", "Trusted Tour Operators",
-                "Guided Holiday Planning", "Travel Planning Made Easier", *COMMON,
-            ],
-            "descriptions": [
-                "Compare guided holidays from trusted tour operators with personal planning help.",
-                "Tell us your destination, dates and budget. We'll suggest suitable coach tour options.",
-                "Ask a coach tour specialist for current itineraries. Your enquiry is obligation-free.",
-                "Explore Trafalgar, Globus, Insight and Cosmos tours with a TICO registered agency.",
-            ],
+            "ads": [{
+                "path1": "coach-tours",
+                "path2": "compare",
+                "headlines": [
+                    "Guided Coach Tours Canada", "Compare Coach Tour Options",
+                    "Find Your Best-Fit Tour", "Trusted Tour Operators",
+                    "Guided Holiday Planning", "Travel Planning Made Easier", *COMMON,
+                ],
+                "descriptions": [
+                    "Compare guided holidays from trusted tour operators with personal planning help.",
+                    "Tell us your destination, dates and budget. We'll suggest suitable coach tour options.",
+                    "Ask a coach tour specialist for current itineraries. Your enquiry is obligation-free.",
+                    "Explore Trafalgar, Globus, Insight and Cosmos tours with a TICO registered agency.",
+                ],
+            }],
         },
     ])
     return groups
@@ -249,18 +269,22 @@ def validate_plan() -> None:
     names = [group["name"] for group in GROUPS]
     assert len(names) == len(set(names)), "Duplicate ad group names"
     for group in GROUPS:
-        headlines = group["headlines"]
-        descriptions = group["descriptions"]
-        assert 3 <= len(headlines) <= 15, group["name"]
-        assert len(headlines) == len(set(headlines)), group["name"]
-        assert 2 <= len(descriptions) <= 4, group["name"]
-        assert all(len(text) <= 30 for text in headlines), [
-            (text, len(text)) for text in headlines if len(text) > 30
-        ]
-        assert all(len(text) <= 90 for text in descriptions), [
-            (text, len(text)) for text in descriptions if len(text) > 90
-        ]
-        assert len(group["path1"]) <= 15 and len(group["path2"]) <= 15
+        assert group["ads"], group["name"]
+        paths = [ad["path2"] for ad in group["ads"]]
+        assert len(paths) == len(set(paths)), f"{group['name']}: duplicate path2"
+        for ad in group["ads"]:
+            headlines = ad["headlines"]
+            descriptions = ad["descriptions"]
+            assert 3 <= len(headlines) <= 15, group["name"]
+            assert len(headlines) == len(set(headlines)), group["name"]
+            assert 2 <= len(descriptions) <= 4, group["name"]
+            assert all(len(text) <= 30 for text in headlines), [
+                (text, len(text)) for text in headlines if len(text) > 30
+            ]
+            assert all(len(text) <= 90 for text in descriptions), [
+                (text, len(text)) for text in descriptions if len(text) > 90
+            ]
+            assert len(ad["path1"]) <= 15 and len(ad["path2"]) <= 15
         keys = {(text.lower(), match) for text, match in group["keywords"]}
         assert len(keys) == len(group["keywords"]), group["name"]
     for text, _, description1, description2 in SITELINKS:
@@ -302,7 +326,20 @@ def mutate(
 
 
 def search(env: dict[str, str], token: str, query: str) -> list[dict[str, Any]]:
-    return ads.search(env, token, CID, query)
+    """Read query with retries.
+
+    The asset and ad queries are heavy enough that the API intermittently
+    times out. Without a retry a --verify run dies mid-snapshot and prints
+    nothing to stdout, which reads like an empty account.
+    """
+    last: Exception | None = None
+    for attempt in range(4):
+        try:
+            return ads.search(env, token, CID, query)
+        except (TimeoutError, OSError) as exc:
+            last = exc
+            time.sleep(3 * (attempt + 1))
+    raise RuntimeError(f"search failed after retries: {last}")
 
 
 def ensure_budget(env: dict[str, str], token: str) -> str:
@@ -477,35 +514,50 @@ def ensure_keywords(
 def ensure_ads(
     env: dict[str, str], token: str, ad_groups: dict[str, str]
 ) -> int:
+    """Create any missing RSA, keyed by (ad group, path2).
+
+    Existing ads are never rewritten. Live ad copy has been edited by hand
+    since launch, so overwriting from this file would silently revert it.
+    """
     rows = search(
         env,
         token,
-        "SELECT ad_group.resource_name, ad_group_ad.ad.id, ad_group_ad.ad.type "
+        "SELECT ad_group.resource_name, ad_group_ad.ad.id, ad_group_ad.ad.type, "
+        "ad_group_ad.ad.responsive_search_ad.path2 "
         "FROM ad_group_ad "
         f"WHERE campaign.name = '{CAMPAIGN}' "
-        "AND ad_group_ad.ad.type = RESPONSIVE_SEARCH_AD",
+        "AND ad_group_ad.ad.type = RESPONSIVE_SEARCH_AD "
+        "AND ad_group_ad.status != 'REMOVED'",
     )
-    existing = {row.get("adGroup", {}).get("resourceName") for row in rows}
+    existing = {
+        (
+            row.get("adGroup", {}).get("resourceName"),
+            row.get("adGroupAd", {}).get("ad", {})
+            .get("responsiveSearchAd", {}).get("path2"),
+        )
+        for row in rows
+    }
     operations = []
     for group in GROUPS:
         resource = ad_groups[group["name"]]
-        if resource in existing:
-            continue
-        operations.append({"create": {
-            "adGroup": resource,
-            "status": "ENABLED",
-            "ad": {
-                "finalUrls": [group["url"]],
-                "responsiveSearchAd": {
-                    "headlines": [{"text": text} for text in group["headlines"]],
-                    "descriptions": [
-                        {"text": text} for text in group["descriptions"]
-                    ],
-                    "path1": group["path1"],
-                    "path2": group["path2"],
+        for ad in group["ads"]:
+            if (resource, ad["path2"]) in existing:
+                continue
+            operations.append({"create": {
+                "adGroup": resource,
+                "status": "ENABLED",
+                "ad": {
+                    "finalUrls": [group["url"]],
+                    "responsiveSearchAd": {
+                        "headlines": [{"text": text} for text in ad["headlines"]],
+                        "descriptions": [
+                            {"text": text} for text in ad["descriptions"]
+                        ],
+                        "path1": ad["path1"],
+                        "path2": ad["path2"],
+                    },
                 },
-            },
-        }})
+            }})
     mutate(env, token, "adGroupAds", operations)
     return len(operations)
 
@@ -578,6 +630,48 @@ def ensure_assets(
     return len(missing), len(links)
 
 
+def ensure_shared_sets(env: dict[str, str], token: str, campaign: str) -> int:
+    """Attach the account-level negative lists to the campaign.
+
+    Negative keywords moved out of this builder on 10 September 2026 when they
+    were consolidated into shared sets. Without this step a rebuilt campaign
+    would serve with NO negative coverage at all, which is worse than the
+    campaign-level negatives it replaced.
+    """
+    sets = {
+        row["sharedSet"]["name"]: row["sharedSet"]["resourceName"]
+        for row in search(
+            env,
+            token,
+            "SELECT shared_set.name, shared_set.resource_name, shared_set.status "
+            "FROM shared_set WHERE shared_set.type = 'NEGATIVE_KEYWORDS' "
+            "AND shared_set.status = 'ENABLED'",
+        )
+    }
+    missing_lists = [name for name in NEGATIVE_SHARED_SETS if name not in sets]
+    if missing_lists:
+        raise RuntimeError(
+            "missing negative shared set(s): " + ", ".join(missing_lists)
+            + " - run tools/consolidate_google_ads_negatives.py first"
+        )
+    attached = {
+        row["campaignSharedSet"]["sharedSet"]
+        for row in search(
+            env,
+            token,
+            "SELECT campaign_shared_set.shared_set FROM campaign_shared_set "
+            f"WHERE campaign.resource_name = '{campaign}'",
+        )
+    }
+    operations = [
+        {"create": {"campaign": campaign, "sharedSet": sets[name]}}
+        for name in NEGATIVE_SHARED_SETS
+        if sets[name] not in attached
+    ]
+    mutate(env, token, "campaignSharedSets", operations)
+    return len(operations)
+
+
 def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
     campaign_rows = search(
         env,
@@ -634,16 +728,44 @@ def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
         "FROM campaign_asset "
         f"WHERE campaign.name = '{CAMPAIGN}'",
     )
+    shared_set_rows = search(
+        env,
+        token,
+        "SELECT shared_set.name, shared_set.status, campaign_shared_set.status "
+        f"FROM campaign_shared_set WHERE campaign.name = '{CAMPAIGN}'",
+    )
     campaign = campaign_rows[0].get("campaign", {}) if campaign_rows else {}
     budget = campaign_rows[0].get("campaignBudget", {}) if campaign_rows else {}
     criteria = [row.get("campaignCriterion", {}) for row in criterion_rows]
+    serving_group_names = {
+        row["adGroup"]["name"]
+        for row in group_rows
+        if row.get("adGroup", {}).get("status") == "ENABLED"
+    }
     return {
         "campaign": campaign,
         "budget_cad_per_day": int(budget.get("amountMicros", "0")) / 1_000_000,
+        # Totals count every row the API returns, including PAUSED groups and
+        # REMOVED criteria. The "serving_" figures are what can actually run,
+        # and are the numbers to quote. The two diverged after the 10 September
+        # 2026 merge left four source ad groups paused but intact.
         "ad_group_count": len(group_rows),
+        "serving_ad_group_count": sum(
+            1 for row in group_rows if row.get("adGroup", {}).get("status") == "ENABLED"
+        ),
         "ad_groups": [row.get("adGroup", {}) for row in group_rows],
         "keyword_count": len(keyword_rows),
+        "serving_keyword_count": sum(
+            1 for row in keyword_rows
+            if row.get("adGroupCriterion", {}).get("status") == "ENABLED"
+            and row.get("adGroup", {}).get("name") in serving_group_names
+        ),
         "responsive_search_ad_count": len(ad_rows),
+        "serving_responsive_search_ad_count": sum(
+            1 for row in ad_rows
+            if row.get("adGroupAd", {}).get("status") == "ENABLED"
+            and row.get("adGroup", {}).get("name") in serving_group_names
+        ),
         "responsive_search_ads": [
             {
                 "ad_group": row.get("adGroup", {}).get("name"),
@@ -655,8 +777,19 @@ def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
             for row in ad_rows
         ],
         "campaign_criterion_count": len(criterion_rows),
-        "negative_keyword_count": sum(
+        # Expected to be 0 since the 10 September 2026 consolidation. Negative
+        # coverage now comes from the attached shared sets below, so read the
+        # two together - a 0 here with 0 attached lists means NO negatives.
+        "campaign_negative_keyword_count": sum(
             1 for item in criteria if item.get("negative") and item.get("keyword")
+        ),
+        "attached_negative_shared_lists": [
+            row.get("sharedSet", {}).get("name") for row in shared_set_rows
+        ],
+        "attached_negative_shared_list_count": len(shared_set_rows),
+        "negative_coverage_ok": (
+            {row.get("sharedSet", {}).get("name") for row in shared_set_rows}
+            == set(NEGATIVE_SHARED_SETS)
         ),
         "location_targets": [
             item.get("location", {}).get("geoTargetConstant")
@@ -690,16 +823,18 @@ def plan() -> dict[str, Any]:
         "targeting": "Canada presence, English",
         "search_partners": False,
         "display_network": False,
+        "ad_group_count": len(GROUPS),
         "ad_groups": [
             {
                 "name": group["name"],
                 "status": group["status"],
                 "keyword_count": len(group["keywords"]),
+                "ad_count": len(group["ads"]),
                 "landing_page": group["url"],
             }
             for group in GROUPS
         ],
-        "negative_shared_list_count": 2,
+        "negative_shared_lists": NEGATIVE_SHARED_SETS,
         "campaign_negative_keyword_count": 0,
         "sitelink_count": len(SITELINKS),
         "callout_count": len(CALLOUTS),
@@ -724,6 +859,7 @@ def main() -> None:
     campaign = ensure_campaign(env, token, budget)
     changes = {
         "campaign_criteria_created": ensure_campaign_criteria(env, token, campaign),
+        "negative_shared_sets_attached": ensure_shared_sets(env, token, campaign),
     }
     ad_groups = ensure_ad_groups(env, token, campaign)
     changes["ad_groups_total"] = len(ad_groups)

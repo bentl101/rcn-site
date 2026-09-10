@@ -259,6 +259,58 @@ def summary(state: dict[str, Any], expected: dict[tuple[str, str], dict[str, Any
     }
 
 
+def remove_term(
+    env: dict[str, str], token: str, state: dict[str, Any], text: str
+) -> dict[str, Any]:
+    """Remove one term from the search-exclusion list.
+
+    Only the search-exclusion list is touched. The country list holds the
+    destination policy and is never edited here, so a typo cannot silently
+    unblock a non-approved destination.
+    """
+    country, search_list = validate_preconditions(state)
+    if not search_list:
+        raise RuntimeError(f"missing shared set: {SEARCH_LIST_NAME}")
+    search_resource = search_list["resourceName"]
+    country_resource = country["resourceName"] if country else None
+
+    wanted = text.strip().lower()
+    matches = [
+        item for item in state["shared_criteria"]
+        if item.get("sharedSet") == search_resource
+        and item.get("keyword", {}).get("text", "").strip().lower() == wanted
+    ]
+    in_country = [
+        item for item in state["shared_criteria"]
+        if country_resource and item.get("sharedSet") == country_resource
+        and item.get("keyword", {}).get("text", "").strip().lower() == wanted
+    ]
+    if in_country:
+        raise RuntimeError(
+            f"{text!r} is in {COUNTRY_LIST_NAME}, not the search list. "
+            "Destination policy terms are not removable through this flag."
+        )
+    if not matches:
+        return {"term": text, "removed": 0, "note": "term not present, nothing to do"}
+
+    backup_path = pathlib.Path("/private/tmp") / (
+        "dct-negative-removal-" + dt.datetime.now(dt.UTC).strftime("%Y%m%d-%H%M%S") + ".json"
+    )
+    backup_path.write_text(json.dumps(matches, indent=2), encoding="utf-8")
+
+    mutate(
+        env, token, "sharedCriteria",
+        [{"remove": item["resourceName"]} for item in matches],
+    )
+    return {
+        "term": text,
+        "list": SEARCH_LIST_NAME,
+        "removed": len(matches),
+        "match_types": [m.get("keyword", {}).get("matchType") for m in matches],
+        "backup": str(backup_path),
+    }
+
+
 def verify_state(
     state: dict[str, Any],
     expected: dict[tuple[str, str], dict[str, Any]] | None = None,
@@ -431,6 +483,11 @@ def main() -> None:
     mode.add_argument("--plan", action="store_true", help="Show the planned changes (default)")
     mode.add_argument("--apply", action="store_true", help="Apply the consolidation")
     mode.add_argument("--verify", action="store_true", help="Verify the final two-list state")
+    mode.add_argument(
+        "--remove-term",
+        metavar="TEXT",
+        help="Remove one term from the search-exclusion list",
+    )
     args = parser.parse_args()
 
     env = ads.load_env()
@@ -442,6 +499,9 @@ def main() -> None:
         report = verify_state(state, expected)
         print(json.dumps(report, indent=2))
         raise SystemExit(0 if report["ok"] else 1)
+    if args.remove_term:
+        print(json.dumps(remove_term(env, token, state, args.remove_term), indent=2))
+        return
     if args.apply:
         print(json.dumps(apply_changes(env, token, state), indent=2))
         return

@@ -1,6 +1,7 @@
 # HANDOFF — DCT negative-keyword list consolidation
 
 **Created:** 10 September 2026
+**Audited:** 10 September 2026 (independent read-only verification passed; see Outcome below)
 **Project:** Discount Coach Tours
 **Purpose:** Have Claude independently double-check the live Google Ads negative-keyword cleanup.
 
@@ -53,7 +54,7 @@ The consolidation script returned:
 - `negative_shared_list_count: 2`
 - both lists `ENABLED`
 - both lists attached
-- `search_list_criteria_count: 71`
+- `search_list_criteria_count: 71` (now 70 - `brochure` removed 10 Sep 2026)
 - `campaign_negative_count: 0`
 - `migrated_terms_missing_from_search_list: []`
 - `protected_destination_overlap: []`
@@ -65,9 +66,9 @@ The independent campaign snapshot returned:
 - budget C$65/day
 - bidding `MAXIMIZE_CONVERSIONS`
 - 10 ad groups
-- 176 positive keyword criteria
+- 176 positive keyword criteria (175 ENABLED + 1 REMOVED `globus canada tours`; quote the enabled figure)
 - 10 approved responsive search ads
-- 5 campaign criteria total: one Canada location target, one English language target, and no negative keywords
+- 5 campaign criteria total: one Canada location target, one English language target, three auto-created DESKTOP/MOBILE/TABLET device criteria (no bid modifiers, non-negative), and no negative keywords
 
 A local JSON backup of the pre-removal campaign-level criteria was written to:
 
@@ -134,3 +135,39 @@ Please perform a read-only audit first. Do not use `--apply`, delete shared sets
 ## Acceptance criteria
 
 The handoff is complete when Claude can independently report that the two enabled shared lists are present and attached, the 71 terms were preserved, campaign-level negative criteria are zero, approved destinations are not blocked, and campaign delivery settings remain unchanged.
+
+
+---
+
+## Outcome of the independent audit (10 September 2026)
+
+Audit passed. Verified independently of the consolidation script's own logic:
+two enabled `NEGATIVE_KEYWORDS` shared sets and no others in the account, both
+attached with `ENABLED` link status, 176 + 71 unique criteria, zero campaign-level
+negative criteria, all 71 migrated terms present with match types preserved and
+no extras, no approved destination present in either list, and no enabled positive
+keyword containing Canada or Morocco. A conflict check of all 175 enabled positive
+keywords against all 247 negatives found no keyword blocked by its own negatives.
+Campaign delivery settings were unchanged.
+
+Follow-up items raised by the audit and since actioned, all 10 September 2026:
+
+1. `build_google_ads_campaign.py` had lost negative coverage entirely. The
+   consolidation removed its `NEGATIVES` loop but added no shared-set attachment,
+   so a rebuild would have produced a campaign with no negatives, and its
+   `--verify` reported `negative_keyword_count: 0` without checking shared sets,
+   making that look healthy. Fixed via `ensure_shared_sets()` plus
+   `negative_coverage_ok` in the snapshot.
+2. The ad group structure was consolidated from ten groups to six.
+3. `brochure` was removed from the search-exclusion list.
+4. Live destination RSAs still advertised Morocco and tours of Canada. Replaced
+   with approved destinations during the ad group merge.
+
+Open item, not actioned. `Canada` is a BROAD negative in a campaign that targets
+Canada geographically. Broad negatives match the search query, not the user's
+location, so this blocks queries such as `trafalgar tours canada`, which the
+account's own RSA headline `Trafalgar Tours Canada` is written to serve. It does
+not conflict with any positive keyword, so it was left in place pending a decision
+on whether to narrow it to phrase negatives (`canada tours`, `tours of canada`,
+`canadian rockies`, `banff`, `jasper`, `niagara falls`) that still exclude tours
+of Canada without blocking Canadians who name their own country in the query.
