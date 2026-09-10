@@ -305,9 +305,9 @@ if (!isQa && /^[a-f0-9]{64}$/i.test(actionToken) && /^[a-f0-9]{64}$/i.test(actio
 }
 const details = [
   ['Lead Order ID', lead.lead_order_id], ['Operator', lead.operator || 'Help me compare'], ['Name', name],
-  ['Email', lead.email], ['Phone', lead.phone], ['Destination', lead.destination], ['Departure city', lead.departure_city],
+  ['Email', lead.email], ['Phone', lead.phone], ['Destination', lead.destination],
   ['Travel date', lead.travel_date], ['Duration', lead.duration], ['Guests', lead.guests], ['Budget', lead.budget],
-  ['Pace', lead.pace], ['Notes', lead.notes], ['Contact preference', lead.contact_preference], ['Source page', lead.source_page],
+  ['Notes', lead.notes], ['Contact preference', lead.contact_preference], ['Source page', lead.source_page],
   ['UTM source', lead.utm_source], ['UTM medium', lead.utm_medium], ['UTM campaign', lead.utm_campaign], ['UTM ID', lead.utm_id],
   ['UTM term', lead.utm_term], ['UTM content', lead.utm_content], ['Match type', lead.matchtype], ['Ad device', lead.gad_device],
   ['Network', lead.network], ['Ad group ID', lead.adgroupid], ['Target ID', lead.targetid], ['Physical location ID', lead.loc_physical],

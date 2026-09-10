@@ -118,7 +118,7 @@ def enquiry_form(data: dict) -> str:
           <ul class="check-list">
             <li>Ask about current dates and availability</li>
             <li>Compare itinerary pace and inclusions</li>
-            <li>Discuss flights from your departure city</li>
+            <li>Discuss itinerary details and inclusions</li>
             <li>No obligation to book</li>
           </ul>
         </aside>
@@ -139,13 +139,11 @@ def enquiry_form(data: dict) -> str:
             <div class="form-section">
               <h3>Your {short} trip</h3>
               <div class="field-grid two">
-                <div class="field"><label for="destination">Where would you like to go?</label><input id="destination" name="destination" placeholder="e.g. Italy, Canadian Rockies" required></div>
-                <div class="field"><label for="departure_city">Departing from</label><input id="departure_city" name="departure_city" placeholder="e.g. Toronto" required></div>
+                <div class="field"><label for="destination">Where would you like to go?</label><input id="destination" name="destination" placeholder="e.g. Italy, Spain or England" required></div>
                 <div class="field"><label for="travel_date">Preferred travel month</label><input id="travel_date" name="travel_date" type="month" required></div>
                 <div class="field"><label for="duration">Ideal trip length</label><select id="duration" name="duration" required><option value="">Choose one</option><option>Up to 7 days</option><option>8–10 days</option><option>11–14 days</option><option>15–21 days</option><option>22+ days</option><option>Flexible</option></select></div>
                 <div class="field"><label for="guests">Travellers</label><select id="guests" name="guests" required><option value="">Choose one</option><option value="1">1 traveller</option><option value="2">2 travellers</option><option value="3">3 travellers</option><option value="4">4 travellers</option><option value="5+">5+ travellers</option></select></div>
                 <div class="field"><label for="budget">Budget per person <span class="optional">(CAD)</span></label><select id="budget" name="budget" required><option value="">Choose one</option><option>$2,000–$3,000</option><option>$3,000–$5,000</option><option>$5,000–$8,000</option><option>$8,000–$12,000</option><option>$12,000+</option><option>Not sure yet</option></select></div>
-                <div class="field"><label for="pace">Preferred pace</label><select id="pace" name="pace" required><option value="">Choose one</option><option>Relaxed</option><option>Balanced</option><option>Active</option><option>Not sure</option></select></div>
               </div>
               <div class="field"><label for="notes">What matters most? <span class="optional">(optional)</span></label><textarea id="notes" name="notes" placeholder="Must-see places, mobility needs, room preferences or anything else that would help."></textarea></div>
               <fieldset class="radio-set"><legend>How should we contact you?</legend><div class="radio-chip"><input id="contact_either" name="contact_preference" value="Either" type="radio" checked><label for="contact_either">Either</label></div><div class="radio-chip"><input id="contact_phone" name="contact_preference" value="Phone" type="radio"><label for="contact_phone">Phone</label></div><div class="radio-chip"><input id="contact_email" name="contact_preference" value="Email" type="radio"><label for="contact_email">Email</label></div></fieldset>

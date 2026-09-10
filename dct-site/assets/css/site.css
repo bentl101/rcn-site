@@ -312,6 +312,7 @@
 
   @media (min-width: 48rem) {
     .field-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .field-grid.two > .field:last-child:nth-child(odd) { grid-column: 1 / -1; }
     .form-wrap { grid-template-columns: minmax(16rem, 0.7fr) minmax(0, 1.3fr); }
     .review-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .cta-band { grid-template-columns: minmax(0, 1fr) auto; }

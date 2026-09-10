@@ -72,9 +72,9 @@ function direct_lead_mail_body(array $lead): string
 {
     $fields = [
         'Lead Order ID' => 'lead_order_id', 'Name' => null, 'Email' => 'email',
-        'Phone' => 'phone', 'Destination' => 'destination', 'Departure city' => 'departure_city',
+        'Phone' => 'phone', 'Destination' => 'destination',
         'Travel date' => 'travel_date', 'Duration' => 'duration', 'Guests' => 'guests',
-        'Budget' => 'budget', 'Operator' => 'operator', 'Pace' => 'pace',
+        'Budget' => 'budget', 'Operator' => 'operator',
         'Notes' => 'notes', 'Contact preference' => 'contact_preference',
         'Source page' => 'source_page', 'UTM source' => 'utm_source',
         'UTM medium' => 'utm_medium', 'UTM campaign' => 'utm_campaign',
@@ -101,7 +101,7 @@ if (clean_value('website', 200) !== '') {
     exit;
 }
 
-$required = ['first_name', 'last_name', 'email', 'phone', 'destination', 'departure_city', 'travel_date', 'duration', 'guests', 'budget', 'pace'];
+$required = ['first_name', 'last_name', 'email', 'phone', 'destination', 'travel_date', 'duration', 'guests', 'budget'];
 foreach ($required as $key) {
     if (clean_value($key) === '') {
         header('Location: /?form_error=missing#enquire', true, 303);
@@ -139,10 +139,10 @@ $lead = [
     'submitted_at' => gmdate('c'), 'lead_order_id' => $orderId,
     'first_name' => clean_value('first_name', 100), 'last_name' => clean_value('last_name', 100),
     'email' => $email, 'phone' => $phone,
-    'destination' => clean_value('destination', 200), 'departure_city' => clean_value('departure_city', 120),
+    'destination' => clean_value('destination', 200),
     'travel_date' => clean_value('travel_date', 20), 'duration' => clean_value('duration', 50),
     'guests' => clean_value('guests', 50), 'budget' => clean_value('budget', 80),
-    'operator' => clean_value('operator', 80), 'pace' => clean_value('pace', 50),
+    'operator' => clean_value('operator', 80),
     'notes' => clean_value('notes', 2000), 'contact_preference' => clean_value('contact_preference', 30),
     'source_page' => clean_value('source_page', 120), 'utm_source' => clean_value('utm_source', 200),
     'utm_medium' => clean_value('utm_medium', 200), 'utm_campaign' => clean_value('utm_campaign', 300),
