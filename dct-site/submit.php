@@ -99,6 +99,7 @@ if ($wbraid === '' && $clickIdType === 'wbraid') $wbraid = $clickId;
 $phone = clean_value('phone', 50);
 $normalisedEmail = normalise_email_for_ads($email);
 $normalisedPhone = normalise_phone_for_ads($phone);
+$actionToken = bin2hex(random_bytes(32));
 
 $ipAddress = substr($_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '', 0, 64);
 $lead = [
@@ -126,6 +127,10 @@ $lead = [
     'ip_address' => $ipAddress, 'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
     'environment' => 'production', 'qa_test' => clean_value('qa_test', 10) === '1' ? '1' : '0',
     'ads_validate_only' => clean_value('qa_test', 10) === '1' && clean_value('ads_validate_only', 10) === '1' ? '1' : '0',
+    // This raw, one-time link secret is sent only to n8n for the action URL.
+    // It is deliberately excluded from the local CSV log below; the sheet
+    // stores only its SHA-256 digest.
+    'action_token' => $actionToken,
 ];
 
 $dataDir = getenv('DCT_DATA_DIR') ?: dirname(__DIR__) . '/dct-private-data';
@@ -134,7 +139,9 @@ if (!is_dir($dataDir) && !mkdir($dataDir, 0770, true) && !is_dir($dataDir)) {
     header('Location: /?form_error=server#enquire', true, 303);
     exit;
 }
-if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', array_keys($lead), array_values($lead))) {
+$logLead = $lead;
+unset($logLead['action_token']);
+if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', array_keys($logLead), array_values($logLead))) {
     error_log('DCT: unable to write private lead log');
     header('Location: /?form_error=server#enquire', true, 303);
     exit;

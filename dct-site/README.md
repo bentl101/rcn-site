@@ -15,7 +15,9 @@ Static HTML/CSS/JS with a PHP lead handler, live at `https://book.discountcoacht
 - Email and phone are normalized and SHA-256 hashed server-side for a future Enhanced Conversions for Leads rollout. Those identifiers are not sent to Google until DCT approves the disclosure and accepts Google's Customer Data Terms.
 - The retained Google Ads client is `363-922-5242` under Copperchunk MCC `381-427-8874`. The later accidental duplicate `536-272-2800` was cancelled on 5 September 2026.
 - Two primary `UPLOAD_CLICKS` actions are live: `DCT - Submit Lead Form (Offline - GCLID)` (`7748271517`, ONE_PER_CLICK) and `DCT - Submit Lead Form (Offline - Braid)` (`7748270854`, MANY_PER_CLICK). Both use a 90-day lookback and a CAD $50 default value.
-- The live `DCT Form Handler` workflow (`PmntlqBanV9ZMy3O`) has 10 nodes: secured intake, isolated lead email, Google OAuth/upload, partial-failure-first parsing and a Ben-only failure alert. The email branch cannot be blocked by an Ads failure.
+- The live `DCT Form Handler` workflow (`PmntlqBanV9ZMy3O`) has 15 nodes: secured intake, hashed email-action token, isolated lead email, private Google Sheet append, Google OAuth/upload, Ads outcome update, partial-failure-first parsing and a Ben-only failure alert. The email and sheet branches cannot be blocked by an Ads failure.
+- The live `DCT Lead Email Actions` workflow (`Gd8fvkAJjC4rJuJy`) is isolated from intake. It provides two-step good/bad buttons in production lead emails, records confirmed actions in the `Lead Actions` tab, waits at least 24 hours plus a 30-minute buffer before any Google Ads retraction, and stops processing after 54 days. Opening or previewing an email never mutates data.
+- The private DCT lead spreadsheet is [Discount Coach Tours Leads & Retractions](https://docs.google.com/spreadsheets/d/1dY5JczBg7qkxMov1HmbPRlOpwPrrKwSndh5NiYXfVTY/edit). `Leads` contains the lead and Ads outcome projection; `Lead Actions` is the append-only confirmation/retraction queue; `Instructions` explains the workflow. Raw email action tokens are never stored in the sheet or CSV, only their SHA-256 digest.
 - DCT-specific GA4/GTM remains optional and needs a DCT measurement ID/container if browser analytics is required. Offline Google Ads conversion tracking does not depend on it.
 
 ## Google Ads API status
@@ -34,10 +36,12 @@ Before upload, set directories to `755` and files to `644`. Never upload tools, 
 
 Rebuild operator pages with `python3 tools/build_operator_pages.py`.
 
-Configure or audit the Ads account with `python3 tools/google_ads_offline.py --validate-config`; `--apply` is idempotent after the target customer is explicitly confirmed. Deploy n8n from the VPS with both public conversion action IDs:
+Configure or audit the Ads account with `python3 tools/google_ads_offline.py --validate-config`; `--apply` is idempotent after the target customer is explicitly confirmed. Deploy the DCT n8n workflows from the VPS (this updates both the main handler and the isolated email-action/retraction workflow):
 
 ```bash
-python3 deploy_n8n_workflow.py --gclid-action-id 7748271517 --braid-action-id 7748270854
+python3 deploy_dct_email_actions.py --phase all
 ```
+
+The compatibility entry point `python3 deploy_n8n_workflow.py` still patches the main handler only. Do not use it to recreate the workflow from scratch: the email-action deployment script is the authoritative source for the combined setup.
 
 For a non-sensitive node-level QA summary, run `python3 inspect_n8n_execution.py EXECUTION_ID` on the n8n VPS. It reports routing and error classifications without printing PII, click IDs, OAuth tokens or other secrets.
