@@ -228,25 +228,6 @@ def build_groups() -> list[dict[str, Any]]:
 
 GROUPS = build_groups()
 
-NEGATIVES = [
-    ("job", "BROAD"), ("jobs", "BROAD"), ("career", "BROAD"),
-    ("careers", "BROAD"), ("employment", "BROAD"), ("hiring", "BROAD"),
-    ("salary", "BROAD"), ("agent login", "PHRASE"),
-    ("travel agent login", "PHRASE"), ("supplier login", "PHRASE"),
-    ("trade portal", "PHRASE"), ("customer service", "PHRASE"),
-    ("customer support", "PHRASE"), ("complaint", "BROAD"),
-    ("refund", "BROAD"), ("cancel booking", "PHRASE"),
-    ("cancellation policy", "PHRASE"), ("honda insight", "PHRASE"),
-    ("cosmoprof", "BROAD"), ("costco", "BROAD"), ("insurance", "BROAD"),
-    ("bus driver", "PHRASE"), ("coach driver", "PHRASE"),
-    ("coach hire", "PHRASE"), ("bus hire", "PHRASE"),
-    ("coach rental", "PHRASE"), ("bus rental", "PHRASE"),
-    ("free tours", "PHRASE"), ("walking tours", "PHRASE"),
-    ("self guided", "PHRASE"), ("wikipedia", "BROAD"), ("pdf", "BROAD"),
-    ("2015", "BROAD"), ("2016", "BROAD"), ("2017", "BROAD"),
-    ("2018", "BROAD"), ("2019", "BROAD"), ("2020", "BROAD"),
-]
-
 SITELINKS = [
     ("Trafalgar Tours", f"{BASE}/trafalgar-tours.html",
      "Explore Trafalgar journeys", "Request suitable tour options"),
@@ -411,14 +392,6 @@ def ensure_campaign_criteria(
         row.get("campaignCriterion", {}).get("language", {}).get("languageConstant")
         for row in rows
     }
-    negatives = {
-        (
-            row.get("campaignCriterion", {}).get("keyword", {}).get("text", "").lower(),
-            row.get("campaignCriterion", {}).get("keyword", {}).get("matchType"),
-        )
-        for row in rows
-        if row.get("campaignCriterion", {}).get("negative")
-    }
     operations: list[dict[str, Any]] = []
     if "geoTargetConstants/2124" not in locations:
         operations.append({"create": {
@@ -430,14 +403,9 @@ def ensure_campaign_criteria(
             "campaign": campaign,
             "language": {"languageConstant": "languageConstants/1000"},
         }})
-    for text, match_type in NEGATIVES:
-        if (text.lower(), match_type) not in negatives:
-            operations.append({"create": {
-                "campaign": campaign,
-                "negative": True,
-                "keyword": {"text": text, "matchType": match_type},
-}
-            })
+    # Negative keywords are account-level shared lists. Keeping them out of
+    # this campaign builder prevents a later rebuild from recreating loose
+    # campaign criteria after consolidation.
     mutate(env, token, "campaignCriteria", operations)
     return len(operations)
 
@@ -731,7 +699,8 @@ def plan() -> dict[str, Any]:
             }
             for group in GROUPS
         ],
-        "negative_keyword_count": len(NEGATIVES),
+        "negative_shared_list_count": 2,
+        "campaign_negative_keyword_count": 0,
         "sitelink_count": len(SITELINKS),
         "callout_count": len(CALLOUTS),
     }
