@@ -187,14 +187,15 @@ def build_groups() -> list[dict[str, Any]]:
             ],
         },
         {
-            "name": "DCT | Generic Coach Tours | HOLD",
-            "status": "PAUSED",
+            "name": "DCT | Generic Coach Tours | Broad Test",
+            "status": "ENABLED",
             "url": f"{BASE}/",
             "path1": "coach-tours",
             "path2": "compare",
-            "keywords": pairs([
-                "guided coach tours", "coach holiday packages",
-            ]),
+            "keywords": [
+                ("coach tours", "BROAD"),
+                ("bus tours", "BROAD"),
+            ],
             "headlines": [
                 "Guided Coach Tours Canada", "Compare Coach Tour Options",
                 "Find Your Best-Fit Tour", "Trusted Tour Operators",
