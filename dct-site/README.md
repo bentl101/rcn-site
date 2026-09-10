@@ -6,10 +6,11 @@ Static HTML/CSS/JS with a PHP lead handler, live at `https://book.discountcoacht
 
 - Approved pages are public and indexable; thank-you and 404 remain `noindex`.
 - Separate PPC pages and forms exist for Trafalgar, Globus, Cosmos and Insight Vacations.
-- `submit.php` writes every valid lead to `~/dct-private-data/leads.csv` before calling n8n.
-- Delivery attempts are audited in `~/dct-private-data/n8n-deliveries.csv`.
+- `submit.php` writes every valid lead to `~/dct-private-data/leads.csv` before calling either delivery path.
+- The PHP/cPanel handler sends a direct hosting backup email and audits the attempt in `~/dct-private-data/direct-email-deliveries.csv`.
+- The n8n handoff is audited separately in `~/dct-private-data/n8n-deliveries.csv`.
 - The dedicated n8n webhook is `/webhook/dct-form`, protected by `X-DCT-Token`.
-- Production emails route to `sales@rivercruisenetwork.com`; QA submissions (`qa_test=1`) route only to Ben.
+- Production emails route to `sales@rivercruisenetwork.com` through both the hosting backup and n8n. QA submissions (`qa_test=1`) route both copies to Ben at `btl101@gmail.com`.
 - Google Ads has a reusable account-level list named `DCT | Global Country Negatives` with 176 broad-match non-approved country/destination terms, including Canada, USA and United States. It is applied to the current DCT campaign; Kiran's approved destinations are excluded. On 10 September 2026, all 28 live positive keyword criteria containing Canada or Morocco were removed, and the campaign builder no longer recreates them. The campaign's Canada geographic audience targeting remains in place so Canadian customers can still find the approved European-tour offers.
 - UTMs, Google ValueTrack fields, separate GCLID/GBRAID/WBRAID values, landing page, referrer, operator, source page, device and time on page are captured. A first-party 90-day attribution cookie preserves the visit across pages, while a newer campaign visit replaces an older stored click bundle.
 - Email and phone are normalized and SHA-256 hashed server-side for a future Enhanced Conversions for Leads rollout. Those identifiers are not sent to Google until DCT approves the disclosure and accepts Google's Customer Data Terms.

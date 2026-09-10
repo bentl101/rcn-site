@@ -63,6 +63,39 @@ function sha256_value(string $value): string
     return $value === '' ? '' : hash('sha256', $value);
 }
 
+function mail_safe_value(string $value): string
+{
+    return str_replace(["\r", "\n"], ' ', $value);
+}
+
+function direct_lead_mail_body(array $lead): string
+{
+    $fields = [
+        'Lead Order ID' => 'lead_order_id', 'Name' => null, 'Email' => 'email',
+        'Phone' => 'phone', 'Destination' => 'destination', 'Departure city' => 'departure_city',
+        'Travel date' => 'travel_date', 'Duration' => 'duration', 'Guests' => 'guests',
+        'Budget' => 'budget', 'Operator' => 'operator', 'Pace' => 'pace',
+        'Notes' => 'notes', 'Contact preference' => 'contact_preference',
+        'Source page' => 'source_page', 'UTM source' => 'utm_source',
+        'UTM medium' => 'utm_medium', 'UTM campaign' => 'utm_campaign',
+        'UTM term' => 'utm_term', 'UTM content' => 'utm_content',
+        'Landing page' => 'landing_page', 'Referrer' => 'referrer',
+        'Submitted at' => 'submitted_at',
+    ];
+    $lines = [
+        'New Discount Coach Tours lead (hosting backup)',
+        'This is the direct PHP/cPanel copy. The n8n email is sent separately.',
+        '',
+    ];
+    foreach ($fields as $label => $key) {
+        $value = $key === null
+            ? trim(mail_safe_value((string)($lead['first_name'] ?? '') . ' ' . (string)($lead['last_name'] ?? '')))
+            : mail_safe_value((string)($lead[$key] ?? ''));
+        $lines[] = $label . ': ' . ($value !== '' ? $value : '—');
+    }
+    return implode("\n", $lines);
+}
+
 if (clean_value('website', 200) !== '') {
     http_response_code(204);
     exit;
@@ -146,6 +179,32 @@ if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', array_keys($logLead), array
     header('Location: /?form_error=server#enquire', true, 303);
     exit;
 }
+
+$isQa = $lead['qa_test'] === '1';
+$directMailTo = $isQa ? 'btl101@gmail.com' : 'sales@rivercruisenetwork.com';
+$directMailSubject = ($isQa ? '[TEST] ' : '') . '[HOSTING] New DCT lead - ' . mail_safe_value(trim($lead['first_name'] . ' ' . $lead['last_name']));
+$directMailHeaders = implode("\r\n", [
+    'From: Discount Coach Tours <website@discountcoachtours.ca>',
+    'Reply-To: ' . mail_safe_value($email),
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8',
+    'X-DCT-Delivery: hosting-backup',
+]);
+$directMailStarted = microtime(true);
+$directMailStatus = 'rejected';
+$directMailError = '';
+if (!function_exists('mail')) {
+    $directMailError = 'mail_unavailable';
+} elseif (mail($directMailTo, $directMailSubject, direct_lead_mail_body($lead), $directMailHeaders)) {
+    $directMailStatus = 'accepted';
+} else {
+    $directMailError = 'mail_returned_false';
+}
+append_csv(
+    rtrim($dataDir, '/') . '/direct-email-deliveries.csv',
+    ['attempted_at', 'lead_order_id', 'recipient_class', 'status', 'error', 'duration_ms'],
+    [gmdate('c'), $orderId, $isQa ? 'qa' : 'production', $directMailStatus, $directMailError, (string)round((microtime(true) - $directMailStarted) * 1000)]
+);
 
 $secretFile = rtrim($dataDir, '/') . '/dct-secrets.php';
 $secrets = is_file($secretFile) ? require $secretFile : [];
