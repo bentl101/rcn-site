@@ -20,6 +20,10 @@ CID = "3639225242"
 CAMPAIGN = "customers/3639225242/campaigns/24230451785"
 COUNTRY_LIST_NAME = "DCT | Global Country Negatives"
 SEARCH_LIST_NAME = "DCT | Global Search Exclusions"
+# Added 11 Sep 2026 by apply_google_ads_place_negatives.py. This tool does not
+# manage its contents but must recognise it, or it refuses to run.
+CITY_LIST_NAME = "DCT | Global City Negatives"
+KNOWN_LIST_NAMES = {COUNTRY_LIST_NAME, SEARCH_LIST_NAME, CITY_LIST_NAME}
 
 PROTECTED_DESTINATIONS = {
     "england",
@@ -182,7 +186,7 @@ def validate_preconditions(state: dict[str, Any]) -> tuple[dict[str, Any], dict[
     unexpected = [
         item
         for item in negative_shared_sets(state)
-        if item.get("name") not in {COUNTRY_LIST_NAME, SEARCH_LIST_NAME}
+        if item.get("name") not in KNOWN_LIST_NAMES
     ]
     if unexpected:
         names = ", ".join(item.get("name", "(unnamed)") for item in unexpected)
@@ -248,7 +252,7 @@ def summary(state: dict[str, Any], expected: dict[tuple[str, str], dict[str, Any
         "campaign_negative_criteria_to_remove_after_coverage": len(state["campaign_negatives"]),
         "protected_destination_overlap": [],
         "target_after_apply": {
-            "negative_shared_list_count": 2,
+            "negative_shared_list_count": len(KNOWN_LIST_NAMES),
             "campaign_negative_count": 0,
             "both_lists_attached": True,
         },
@@ -326,7 +330,7 @@ def verify_state(
     target_resources = {
         item.get("resourceName")
         for item in neg_sets
-        if item.get("name") in {COUNTRY_LIST_NAME, SEARCH_LIST_NAME}
+        if item.get("name") in KNOWN_LIST_NAMES
     }
     search_criteria = criteria_for_set(state, search_list["resourceName"]) if search_list else []
     search_keys = {criterion_key(item) for item in search_criteria}
@@ -358,8 +362,8 @@ def verify_state(
         "protected_destination_overlap": protected_overlap,
     }
     report["ok"] = (
-        names == {COUNTRY_LIST_NAME, SEARCH_LIST_NAME}
-        and len(neg_sets) == 2
+        names == KNOWN_LIST_NAMES
+        and len(neg_sets) == len(KNOWN_LIST_NAMES)
         and all(item.get("status") == "ENABLED" for item in neg_sets)
         and attached == target_resources
         and len(state["campaign_negatives"]) == 0

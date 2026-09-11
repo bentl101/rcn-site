@@ -19,6 +19,7 @@ BASE = "https://book.discountcoachtours.ca"
 NEGATIVE_SHARED_SETS = [
     "DCT | Global Country Negatives",
     "DCT | Global Search Exclusions",
+    "DCT | Global City Negatives",  # added 11 Sep 2026
 ]
 
 
