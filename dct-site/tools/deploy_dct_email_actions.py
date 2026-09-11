@@ -507,6 +507,9 @@ def patch_main_workflow(workflow: dict) -> dict:
     workflow = copy.deepcopy(workflow)
     by_name = {node["name"]: node for node in workflow.get("nodes", [])}
 
+    if "Send Email Notification" in by_name:
+        by_name["Send Email Notification"].setdefault("parameters", {})["toEmail"] = "={{ $json.is_qa ? 'btl101@gmail.com' : 'btl101@gmail.com, sales@rivercruisenetwork.com' }}"
+
     by_name["Hash Action Token"] = crypto_node(
         "Hash Action Token", "dct-hash-action-token", (-360, 0),
         {"action": "hash", "type": "SHA256", "binaryData": False,

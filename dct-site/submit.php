@@ -181,7 +181,7 @@ if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', array_keys($logLead), array
 }
 
 $isQa = $lead['qa_test'] === '1';
-$directMailTo = $isQa ? 'btl101@gmail.com' : 'sales@rivercruisenetwork.com';
+$directMailTo = $isQa ? 'btl101@gmail.com' : 'sales@rivercruisenetwork.com, btl101@gmail.com';
 $directMailSubject = ($isQa ? '[TEST] ' : '') . '[HOSTING] New DCT lead - ' . mail_safe_value(trim($lead['first_name'] . ' ' . $lead['last_name']));
 $directMailHeaders = implode("\r\n", [
     'From: Discount Coach Tours <website@discountcoachtours.ca>',
