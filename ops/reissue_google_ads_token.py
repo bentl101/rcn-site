@@ -190,6 +190,7 @@ def smoke_n8n() -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--print-token", action="store_true", help="print the raw refresh token for a manual Apps Script update")
     args = ap.parse_args()
 
     env = read_env(LOCAL_ENV)
@@ -206,8 +207,12 @@ def main() -> None:
     if not args.dry_run:
         smoke_n8n()
     print("  [MANUAL] 4. Apps Script -> Project Settings -> Script Properties ->")
-    print("     GOOGLE_ADS_REFRESH_TOKEN. Paste the value below. Never commit it.\n")
-    print(f"  {token}\n")
+    print("     GOOGLE_ADS_REFRESH_TOKEN still needs updating for the RCN workbook.")
+    if args.print_token:
+        print("     Raw token requested explicitly; never commit it.\n")
+        print(f"  {token}\n")
+    else:
+        print("     Raw token hidden. Re-run with --print-token only when updating that property.\n")
     print("then backfill any lead that missed its upload while the token was dead:")
     print("  ./conversion_worker.py --upload-order RCN-...")
 

@@ -20,6 +20,9 @@ MAIN_WORKFLOW_ID = "PmntlqBanV9ZMy3O"
 MAIN_WORKFLOW_NAME = "DCT Form Handler"
 ACTION_WORKFLOW_NAME = "DCT Lead Email Actions"
 SHEET_ID = "1dY5JczBg7qkxMov1HmbPRlOpwPrrKwSndh5NiYXfVTY"
+DATA_MANAGER_SHEET_ID = "12NZo1KjNDeuMUk-0f0AirO5lNZD0AssWf41kRTUXGh8"
+DATA_MANAGER_SHEET_TAB = "Conversions"
+DATA_MANAGER_ACTION_NAME = "DCT - Submit Lead Form (Data Manager - GCLID)"
 SHEETS_CREDENTIAL = {
     "googleSheetsOAuth2Api": {
         "id": "YAn0z4KXSLPGMLum",
@@ -28,7 +31,7 @@ SHEETS_CREDENTIAL = {
 }
 CUSTOMER_ID = "3639225242"
 LOGIN_CUSTOMER_ID = "3814278874"
-GCLID_ACTION_ID = "7748271517"
+GCLID_ACTION_ID = "7762251563"
 BRAID_ACTION_ID = "7748270854"
 ACTION_BASE_URL = "https://n8.copperchunk.com/webhook/dct-lead-action"
 ACTION_POST_URL = "https://n8.copperchunk.com/webhook/dct-lead-action-confirm"
@@ -153,12 +156,12 @@ def sheet_name(value: str):
     return {"__rl": True, "value": value, "mode": "name"}
 
 
-def sheet_read_node(name: str, node_id: str, position, tab: str, range_a1: str, *, lookup_column=None, lookup_value=None, always_output=False, on_error=None):
+def sheet_read_node(name: str, node_id: str, position, tab: str, range_a1: str, *, document_id=SHEET_ID, lookup_column=None, lookup_value=None, always_output=False, on_error=None):
     parameters = {
         "authentication": "oAuth2",
         "resource": "sheet",
         "operation": "read",
-        "documentId": sheet_ref(SHEET_ID),
+        "documentId": sheet_ref(document_id),
         "sheetName": sheet_name(tab),
         "options": {
             "dataLocationOnSheet": {"values": {"rangeDefinition": "specifyRangeA1", "range": range_a1}},
@@ -185,11 +188,11 @@ def sheet_read_node(name: str, node_id: str, position, tab: str, range_a1: str, 
     return node
 
 
-def sheet_append_node(name: str, node_id: str, position, tab: str):
+def sheet_append_node(name: str, node_id: str, position, tab: str, *, document_id=SHEET_ID):
     return {
         "parameters": {
             "authentication": "oAuth2", "resource": "sheet", "operation": "append",
-            "documentId": sheet_ref(SHEET_ID), "sheetName": sheet_name(tab),
+            "documentId": sheet_ref(document_id), "sheetName": sheet_name(tab),
             "columns": {"mappingMode": "autoMapInputData", "value": {}, "matchingColumns": [], "schema": []},
             "options": {"handlingExtraData": "ignoreIt", "cellFormat": "RAW"},
         },
@@ -199,13 +202,27 @@ def sheet_append_node(name: str, node_id: str, position, tab: str):
     }
 
 
-def sheet_update_node(name: str, node_id: str, position, tab: str, matching: str, fields: dict):
+def sheet_update_node(name: str, node_id: str, position, tab: str, matching: str, fields: dict, *, document_id=SHEET_ID):
     values = {matching: "={{ $json.%s }}" % matching}
     values.update({key: "={{ $json.%s }}" % key for key in fields})
     return {
         "parameters": {
             "authentication": "oAuth2", "resource": "sheet", "operation": "update",
-            "documentId": sheet_ref(SHEET_ID), "sheetName": sheet_name(tab),
+            "documentId": sheet_ref(document_id), "sheetName": sheet_name(tab),
+            "columns": {"mappingMode": "defineBelow", "value": values, "matchingColumns": [matching], "schema": []},
+            "options": {"handlingExtraData": "ignoreIt", "cellFormat": "RAW"},
+        },
+        "id": node_id, "name": name, "type": "n8n-nodes-base.googleSheets", "typeVersion": 4.5,
+        "position": list(position), "credentials": copy.deepcopy(SHEETS_CREDENTIAL),
+        "alwaysOutputData": True, "onError": "continueRegularOutput",
+    }
+
+
+def sheet_update_values_node(name: str, node_id: str, position, tab: str, matching: str, values: dict, *, document_id=SHEET_ID):
+    return {
+        "parameters": {
+            "authentication": "oAuth2", "resource": "sheet", "operation": "update",
+            "documentId": sheet_ref(document_id), "sheetName": sheet_name(tab),
             "columns": {"mappingMode": "defineBelow", "value": values, "matchingColumns": [matching], "schema": []},
             "options": {"handlingExtraData": "ignoreIt", "cellFormat": "RAW"},
         },
@@ -253,6 +270,18 @@ def ads_http_node(name: str, node_id: str, position, endpoint: str, json_body: s
         },
         "id": node_id, "name": name, "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2,
         "position": list(position), "onError": "continueRegularOutput",
+    }
+
+
+def alert_email_node(name: str, node_id: str, position, subject: str, html: str):
+    return {
+        "parameters": {
+            "fromEmail": "ben@copperchunk.com", "toEmail": "btl101@gmail.com",
+            "subject": subject, "emailFormat": "html", "html": html, "options": {},
+        },
+        "id": node_id, "name": name, "type": "n8n-nodes-base.emailSend", "typeVersion": 2.1,
+        "position": list(position), "onError": "continueRegularOutput",
+        "credentials": {"smtp": {"id": "upVw1vzTxegbXV9E", "name": "Google Workspace SMTP"}},
     }
 
 
@@ -337,16 +366,150 @@ return [{json: row}];
 """ % json.dumps(LEAD_SHEET_FIELDS)
 
 
+BUILD_ADS_UPLOAD_JS = r'''
+const lead = $json;
+const isQa = Boolean(lead.is_qa);
+const validateOnly = isQa && String(lead.ads_validate_only || '') === '1';
+if (isQa && !validateOnly) return [];
+
+const genericType = String(lead.click_id_type || '').toLowerCase();
+const genericId = String(lead.click_id || '').trim();
+let gclid = String(lead.gclid || (genericType === 'gclid' ? genericId : '')).trim();
+let gbraid = String(lead.gbraid || (genericType === 'gbraid' ? genericId : '')).trim();
+let wbraid = String(lead.wbraid || (genericType === 'wbraid' ? genericId : '')).trim();
+if (!gclid && !gbraid && !wbraid) return [];
+if (gbraid && wbraid) {
+  if (genericType === 'wbraid') gbraid = '';
+  else wbraid = '';
+}
+const braidType = gbraid ? 'gbraid' : (wbraid ? 'wbraid' : '');
+const braidValue = gbraid || wbraid;
+const route = braidValue ? 'braid' : 'gclid';
+const actionId = braidValue ? '7748270854' : '7762251563';
+
+const parsed = new Date(String(lead.submitted_at || ''));
+const when = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+const iso = when.toISOString();
+const conversionDateTime = iso.slice(0, 10) + ' ' + iso.slice(11, 19) + '+00:00';
+const conversion = {
+  conversionAction: 'customers/3639225242/conversionActions/' + actionId,
+  conversionDateTime,
+  conversionValue: 50,
+  currencyCode: 'CAD',
+  conversionEnvironment: 'WEB',
+  orderId: String(lead.lead_order_id || '')
+};
+const eclRequested = String(lead.ads_ecl_allowed || '') === '1';
+const identifiers = [];
+if (eclRequested && lead.hashed_email) identifiers.push({hashedEmail: String(lead.hashed_email)});
+if (eclRequested && lead.hashed_phone) identifiers.push({hashedPhoneNumber: String(lead.hashed_phone)});
+const eclAllowed = eclRequested && identifiers.length > 0;
+if (gclid && (!braidType || (eclAllowed && braidType === 'gbraid'))) conversion.gclid = gclid;
+if (braidType) conversion[braidType] = braidValue;
+if (eclAllowed) conversion.userIdentifiers = identifiers;
+
+return [{json: {
+  ...lead,
+  ads_route: route,
+  ads_action_id: actionId,
+  ads_validate_only: validateOnly,
+  ads_conversion_datetime: conversionDateTime,
+  queue_data_manager: route === 'gclid' && !validateOnly,
+  google_ads_request: {conversions: [conversion], partialFailure: true, validateOnly}
+}}];
+'''
+
+
+BUILD_DATA_MANAGER_ROW_JS = r'''
+const lead = $('Build Ads Upload').first().json || {};
+return [{json:{
+  'Google Click ID': String(lead.gclid || lead.click_id || ''),
+  'Conversion action': 'DCT - Submit Lead Form (Data Manager - GCLID)',
+  'Conversion date/time': String(lead.ads_conversion_datetime || ''),
+  'Conversion value': 50,
+  'Currency': 'CAD',
+  'Order ID': String(lead.lead_order_id || ''),
+  'Event source': 'WEB',
+  'Import status': 'active'
+}}];
+'''
+
+
+CHECK_DATA_MANAGER_QUEUE_JS = r'''
+const lead = $('Build Ads Upload').first().json || {};
+const result = $input.first().json || {};
+const failure = result.error || result.errorMessage || result.message || '';
+const errorText = failure ? (typeof failure === 'string' ? failure : JSON.stringify(failure)) : '';
+return [{json:{...lead,data_manager_queued:!errorText,data_manager_queue_error:errorText}}];
+'''
+
+
+PARSE_ADS_UPLOAD_JS = r'''
+const request = $('Build Ads Upload').first().json || {};
+const response = $json || {};
+let dataManagerQueued = false;
+let dataManagerError = '';
+if (request.ads_route === 'gclid' && !request.ads_validate_only) {
+  const queue = $('Check Data Manager Queue').first().json || {};
+  dataManagerQueued = Boolean(queue.data_manager_queued);
+  dataManagerError = String(queue.data_manager_queue_error || '');
+}
+const partial = response.partialFailureError || response.partial_failure_error || null;
+const rpc = response.error || null;
+const nodeError = response.errorMessage || response.message || null;
+const failure = partial || rpc || nodeError;
+const results = Array.isArray(response.results) ? response.results : [];
+const accepted = !failure && (request.ads_validate_only || results.length > 0);
+const errorText = failure ? (typeof failure === 'string' ? failure : JSON.stringify(failure)) : '';
+return [{json:{
+  ...request,
+  data_manager_queued: dataManagerQueued,
+  data_manager_queue_error: dataManagerError,
+  ads_upload_accepted: accepted,
+  ads_upload_error: errorText,
+  ads_results_returned: results.length,
+  ads_raw_response: response
+}}];
+'''
+
+
+BUILD_ADS_ALERT_JS = r'''
+const item = $json;
+const queueExpected = item.ads_route === 'gclid' && !item.ads_validate_only;
+const queueFailed = queueExpected && !item.data_manager_queued;
+const immediateFailed = !item.ads_upload_accepted;
+if (!queueFailed && !immediateFailed) return [];
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+let label = '';
+let prefix = '';
+if (item.ads_validate_only) {
+  label = 'DCT Google Ads validation rejected'; prefix = '[TEST] ';
+} else if (queueFailed && immediateFailed) {
+  label = 'DCT immediate upload and Data Manager queue both failed'; prefix = '[ACTION REQUIRED] ';
+} else if (queueFailed) {
+  label = 'DCT Data Manager backup queue failed'; prefix = '[BACKUP WARNING] ';
+} else if (item.data_manager_queued) {
+  label = 'DCT immediate upload delayed; Data Manager retry queued'; prefix = '[RETRY QUEUED] ';
+} else {
+  label = 'DCT Google Ads upload failed'; prefix = '[ACTION REQUIRED] ';
+}
+const subject = prefix + label + ' - ' + String(item.lead_order_id || 'unknown order');
+const html = '<div style="font-family:Arial,sans-serif"><h2>' + esc(label) + '</h2><p><strong>Order ID:</strong> ' + esc(item.lead_order_id) + '</p><p><strong>Route:</strong> ' + esc(item.ads_route) + '</p><p><strong>Action ID:</strong> ' + esc(item.ads_action_id) + '</p><p><strong>Data Manager queued:</strong> ' + esc(item.data_manager_queued) + '</p><p><strong>Immediate API:</strong></p><pre style="white-space:pre-wrap">' + esc(item.ads_upload_error || 'No result returned') + '</pre>' + (queueFailed ? '<p><strong>Queue error:</strong></p><pre style="white-space:pre-wrap">' + esc(item.data_manager_queue_error || 'Unknown queue error') + '</pre>' : '') + '</div>';
+return [{json:{...item,ads_alert_subject:subject,ads_alert_html:html}}];
+'''
+
+
 BUILD_ADS_OUTCOME_JS = r'''
 const item = $json;
 const accepted = Boolean(item.ads_upload_accepted) && !Boolean(item.ads_validate_only);
 const validated = Boolean(item.ads_upload_accepted) && Boolean(item.ads_validate_only);
+const queued = !accepted && !validated && Boolean(item.data_manager_queued);
 const now = new Date().toISOString();
 const actionId = String(item.ads_action_id || '');
 return [{json:{
   lead_order_id: String(item.lead_order_id || ''),
-  ads_upload_status: accepted ? 'accepted' : (validated ? 'validated' : 'failed'),
-  ads_upload_error: String(item.ads_upload_error || ''),
+  ads_upload_status: accepted ? 'accepted' : (validated ? 'validated' : (queued ? 'queued_data_manager' : 'failed')),
+  ads_upload_error: [String(item.ads_upload_error || ''), String(item.data_manager_queue_error || '')].filter(Boolean).join(' | '),
   ads_conversion_action: actionId ? 'customers/3639225242/conversionActions/' + actionId : '',
   ads_uploaded_at_utc: accepted ? now : ''
 }}];
@@ -375,10 +538,9 @@ const state = String(row.manual_action || '');
 if (String(q.recorded || '') === '1') return [{json:{response_html:shell('Decision recorded','<p style="line-height:1.55;">Your <strong>' + esc(action) + '</strong> decision has been recorded and queued for processing.</p><p style="font-size:13px;color:#667085;">Order ' + esc(oid) + '. You can close this page safely.</p>')}}];
 if (state) return [{json:{response_html:shell('Lead already reviewed','<p style="line-height:1.55;">This lead already has a recorded action: <strong>' + esc(state) + '</strong>.</p><p style="font-size:13px;color:#667085;">No new action was taken.</p>')}}];
 const adsStatus = String(row.ads_upload_status || '');
-const adsAction = String(row.ads_conversion_action || '');
-const canRetract = adsStatus === 'accepted' && /^customers\/3639225242\/conversionActions\/(7748271517|7748270854)$/.test(adsAction);
+const canRetract = Boolean(String(row.gclid || row.gbraid || row.wbraid || row.click_id || '').trim());
 let heading = action === 'good' ? 'Confirm this is a good lead' : 'Confirm this lead is bad';
-let explanation = action === 'good' ? 'This records the human verdict in the DCT spreadsheet.' : (canRetract ? 'This queues a Google Ads retraction. Google Ads will not be called until the original conversion is at least 24 hours old.' : 'This records the human verdict as rejected. No accepted Google Ads conversion is available for automatic retraction.');
+let explanation = action === 'good' ? 'This records the human verdict in the DCT spreadsheet.' : (canRetract ? 'This stops any pending Data Manager retry and queues a Google Ads retraction. The retraction worker starts after the original conversion is at least 24 hours old and keeps retrying until Google can match it.' : 'This records the human verdict as rejected. There is no Google click identifier to retract.');
 let button = action === 'good' ? 'Confirm good lead' : (canRetract ? 'Confirm and queue retraction' : 'Confirm rejected lead');
 const html = '<p style="line-height:1.55;">' + esc(explanation) + '</p><div style="background:#f7f9fb;border:1px solid #d9e0e6;border-radius:6px;padding:12px 14px;margin:18px 0;"><div><strong>Destination:</strong> ' + esc(row.destination || 'Not specified') + '</div><div><strong>Order:</strong> ' + esc(oid) + '</div><div><strong>Ads status:</strong> ' + esc(adsStatus || 'not uploaded') + '</div></div><form method="post" action="https://n8.copperchunk.com/webhook/dct-lead-action-confirm"><input type="hidden" name="oid" value="' + esc(oid) + '"><input type="hidden" name="action" value="' + esc(action) + '"><input type="hidden" name="token" value="' + esc(token) + '"><input type="hidden" name="confirm" value="yes"><button type="submit" style="border:0;border-radius:5px;background:' + (action === 'good' ? '#16794b' : '#b3261e') + ';color:#fff;font-size:16px;font-weight:bold;padding:13px 18px;cursor:pointer;">' + esc(button) + '</button></form><p style="font-size:12px;color:#667085;margin-top:16px;">Nothing changes until you press the confirmation button.</p>';
 return [{json:{response_html:shell(heading, html)}}];
@@ -404,7 +566,7 @@ return [{json:{valid, error_html:errorHtml, lead_order_id:oid, requested_action:
 
 BUILD_EVENT_JS = r'''
 const validated = $('Validate DCT Action POST').first().json;
-return [{json:{event_id:String($json.event_id || ''),received_at_utc:validated.received_at_utc,lead_order_id:validated.lead_order_id,requested_action:validated.requested_action,token_hash:validated.token_hash,source:validated.source,processed_at_utc:'',result:'',ads_due_at_utc:'',ads_processed_at_utc:'',ads_result:'',ads_conversion_action:'',execution_id:validated.execution_id,detail:''}}];
+return [{json:{event_id:String($json.event_id || ''),received_at_utc:validated.received_at_utc,lead_order_id:validated.lead_order_id,requested_action:validated.requested_action,token_hash:validated.token_hash,source:validated.source,processed_at_utc:'',result:'',ads_due_at_utc:'',ads_processed_at_utc:'',ads_result:'',ads_conversion_action:'',execution_id:validated.execution_id,detail:'',ads_attempt_count:0,ads_next_attempt_at_utc:''}}];
 '''
 
 
@@ -428,6 +590,8 @@ let result = '';
 let detail = '';
 let due = '';
 let writeLead = false;
+let disableDataManager = false;
+let adsAction = '';
 if (!found || !tokenOk || !['good','bad'].includes(requested)) {
   result = 'invalid_event'; detail = 'Lead or action token no longer matches.';
 } else if (current) {
@@ -439,26 +603,32 @@ if (!found || !tokenOk || !['good','bad'].includes(requested)) {
   result = 'good_recorded'; detail = 'Human marked the lead as good.';
 } else {
   writeLead = true;
-  const adsAction = String(row.ads_conversion_action || '');
-  const canRetract = String(row.ads_upload_status || '') === 'accepted' && /^customers\/3639225242\/conversionActions\/(7748271517|7748270854)$/.test(adsAction);
+  const hasBraid = Boolean(String(row.gbraid || row.wbraid || '').trim()) || ['gbraid','wbraid'].includes(String(row.click_id_type || '').toLowerCase());
+  const hasGclid = Boolean(String(row.gclid || '').trim()) || String(row.click_id_type || '').toLowerCase() === 'gclid';
+  adsAction = hasBraid ? 'customers/3639225242/conversionActions/7748270854' : (hasGclid ? 'customers/3639225242/conversionActions/7762251563' : '');
+  const canRetract = Boolean(adsAction);
   if (canRetract) {
-    const raw = String(row.ads_uploaded_at_utc || row.submitted_at || '');
+    const raw = String(row.submitted_at || row.ads_uploaded_at_utc || '');
     const submitted = new Date(raw.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? '' : 'Z'));
     const earliest = Number.isNaN(submitted.getTime()) ? now.getTime() : submitted.getTime() + (24 * 60 + 30) * 60000;
     due = new Date(Math.max(now.getTime(), earliest)).toISOString();
-    nextState = 'bad_retraction_queued'; result = 'retraction_queued'; detail = 'Human marked bad; retraction due ' + due + '.';
+    disableDataManager = hasGclid && !hasBraid;
+    nextState = 'bad_retraction_queued'; result = 'retraction_queued'; detail = 'Human marked bad; Data Manager retry stopped where present; retraction due ' + due + '.';
   } else {
     nextState = 'bad_rejected'; result = 'rejected'; detail = 'Human marked bad; no accepted DCT Ads conversion is available to retract.';
   }
 }
-return [{json:{...event,_write_lead:writeLead,lead_order_id:String(event.lead_order_id || ''),manual_action:nextState,processed_at_utc:now.toISOString(),result,ads_due_at_utc:due,ads_processed_at_utc:'',ads_result:'',ads_conversion_action:String(row.ads_conversion_action || ''),detail}}];
+return [{json:{...event,_write_lead:writeLead,_disable_data_manager:disableDataManager,lead_order_id:String(event.lead_order_id || ''),dm_import_status:'retracted',manual_action:nextState,processed_at_utc:now.toISOString(),result,ads_due_at_utc:due,ads_processed_at_utc:'',ads_result:'',ads_conversion_action:adsAction || String(row.ads_conversion_action || ''),detail,ads_attempt_count:0,ads_next_attempt_at_utc:due}}];
 '''
 
 
 PICK_DUE_RETRACTION_JS = r'''
 const now = Date.now();
-const rows = $input.all().map(i => i.json).filter(r => String(r.event_id || '') && String(r.result || '') === 'retraction_queued' && !String(r.ads_processed_at_utc || '') && String(r.ads_due_at_utc || '') && new Date(r.ads_due_at_utc).getTime() <= now);
-rows.sort((a,b) => new Date(a.ads_due_at_utc).getTime() - new Date(b.ads_due_at_utc).getTime() || Number(a.row_number || 0) - Number(b.row_number || 0));
+const rows = $input.all().map(i => i.json).filter(r => {
+  const due = String(r.ads_next_attempt_at_utc || r.ads_due_at_utc || '');
+  return String(r.event_id || '') && String(r.result || '') === 'retraction_queued' && !String(r.ads_processed_at_utc || '') && due && new Date(due).getTime() <= now;
+});
+rows.sort((a,b) => new Date(a.ads_next_attempt_at_utc || a.ads_due_at_utc).getTime() - new Date(b.ads_next_attempt_at_utc || b.ads_due_at_utc).getTime() || Number(a.row_number || 0) - Number(b.row_number || 0));
 return rows.length ? [{json:rows[0]}] : [];
 '''
 
@@ -469,9 +639,12 @@ const row = $input.first().json || {};
 const now = new Date();
 const found = String(row.lead_order_id || '') === String(event.lead_order_id || '');
 const state = String(row.manual_action || '');
-const action = String(event.ads_conversion_action || row.ads_conversion_action || '');
-const validAction = /^customers\/3639225242\/conversionActions\/(7748271517|7748270854)$/.test(action);
-const raw = String(row.ads_uploaded_at_utc || row.submitted_at || '');
+const hasBraid = Boolean(String(row.gbraid || row.wbraid || '').trim()) || ['gbraid','wbraid'].includes(String(row.click_id_type || '').toLowerCase());
+const hasGclid = Boolean(String(row.gclid || '').trim()) || String(row.click_id_type || '').toLowerCase() === 'gclid';
+const derivedAction = hasBraid ? 'customers/3639225242/conversionActions/7748270854' : (hasGclid ? 'customers/3639225242/conversionActions/7762251563' : '');
+const action = String(event.ads_conversion_action || derivedAction || row.ads_conversion_action || '');
+const validAction = /^customers\/3639225242\/conversionActions\/(7762251563|7748270854)$/.test(action);
+const raw = String(row.submitted_at || row.ads_uploaded_at_utc || '');
 const submitted = new Date(raw.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? '' : 'Z'));
 const ageDays = Number.isNaN(submitted.getTime()) ? 999 : (now.getTime() - submitted.getTime()) / 86400000;
 let doRetract = false;
@@ -481,22 +654,47 @@ let detail = '';
 let processed = now.toISOString();
 if (!found) { adsResult = 'lead_not_found'; detail = 'DCT lead row was not found.'; }
 else if (state !== 'bad_retraction_queued') { adsResult = 'state_changed'; detail = 'Retraction cancelled because lead state is ' + (state || 'blank') + '.'; }
-else if (!validAction || String(row.ads_upload_status || '') !== 'accepted') { adsResult = 'not_eligible'; detail = 'Retraction cancelled because the Ads upload is not accepted.'; }
+else if (!validAction) { adsResult = 'not_eligible'; detail = 'Retraction cancelled because there is no supported DCT conversion action.'; }
 else if (ageDays > 54) { nextState = 'bad_retraction_expired'; adsResult = 'expired'; detail = 'Google Ads retraction window expired; manual attention required.'; }
+else if (ageDays < 1) { adsResult = 'not_due'; processed = ''; detail = 'Retraction is not yet 24 hours old.'; }
 else { doRetract = true; processed = ''; detail = 'Retraction ready for Google Ads.'; }
-return [{json:{...event,_do_retract:doRetract,lead_order_id:String(event.lead_order_id || ''),manual_action:nextState,retraction_processed_at_utc:doRetract?'':now.toISOString(),ads_processed_at_utc:processed,ads_result:adsResult,ads_conversion_action:action,detail}}];
+return [{json:{...event,_do_retract:doRetract,lead_order_id:String(event.lead_order_id || ''),manual_action:nextState,retraction_processed_at_utc:doRetract?'':now.toISOString(),ads_processed_at_utc:processed,ads_result:adsResult,ads_conversion_action:action,detail,ads_attempt_count:Number(event.ads_attempt_count || 0),ads_next_attempt_at_utc:String(event.ads_next_attempt_at_utc || event.ads_due_at_utc || '')}}];
 '''
 
 
 PARSE_RETRACTION_JS = r'''
 const event = $('Prepare DCT Retraction').first().json || {};
 const resp = $input.first().json || {};
-const failure = resp.partialFailureError && resp.partialFailureError.message ? String(resp.partialFailureError.message) : (resp.error && resp.error.message ? String(resp.error.message) : '');
+const failureObject = resp.partialFailureError || resp.partial_failure_error || resp.error || resp.errorMessage || resp.message || '';
+const failure = failureObject ? (typeof failureObject === 'string' ? failureObject : JSON.stringify(failureObject)) : '';
 const already = /ALREADY_RETRACTED|CONVERSION_ALREADY_RETRACTED/i.test(failure);
 const accepted = already || (Array.isArray(resp.results) && resp.results.length > 0 && !failure);
-const now = new Date().toISOString();
-const detail = already ? 'Google Ads reports this conversion was already retracted.' : (accepted ? 'Google Ads accepted the retraction.' : 'Google Ads retraction failed: ' + (failure || JSON.stringify(resp)).slice(0, 500));
-return [{json:{...event,_do_retract:false,manual_action:accepted?'bad_retracted':'bad_retraction_failed',retraction_processed_at_utc:now,ads_processed_at_utc:now,ads_result:accepted?(already?'already_retracted':'accepted'):'failed',detail}}];
+const attempt = Number(event.ads_attempt_count || 0) + 1;
+const nowDate = new Date();
+const now = nowDate.toISOString();
+const submittedRaw = String(event.ads_due_at_utc || '');
+const ageDays = submittedRaw ? (nowDate.getTime() - new Date(submittedRaw).getTime()) / 86400000 + (24.5 / 24) : 0;
+const retryable = !accepted && (!failure || /CONVERSION_NOT_FOUND|TOO_RECENT|UNAUTHENTICATED|invalid_grant|RESOURCE_EXHAUSTED|INTERNAL|UNAVAILABLE|DEADLINE_EXCEEDED|temporar|timeout|429|5\d\d/i.test(failure));
+const canRetry = retryable && ageDays <= 54;
+const delayHours = attempt <= 2 ? 1 : (attempt <= 4 ? 3 : (attempt <= 8 ? 6 : 12));
+const nextAttempt = canRetry ? new Date(nowDate.getTime() + delayHours * 3600000).toISOString() : '';
+const detail = already ? 'Google Ads reports this conversion was already retracted.' : (accepted ? 'Google Ads accepted the retraction.' : (canRetry ? 'Retraction attempt ' + attempt + ' failed and will retry at ' + nextAttempt + ': ' : 'Google Ads retraction failed permanently: ') + (failure || JSON.stringify(resp)).slice(0, 500));
+return [{json:{...event,_do_retract:false,manual_action:accepted?'bad_retracted':(canRetry?'bad_retraction_queued':'bad_retraction_failed'),retraction_processed_at_utc:accepted||!canRetry?now:'',ads_processed_at_utc:accepted||!canRetry?now:'',ads_result:accepted?(already?'already_retracted':'accepted'):(canRetry?'retry_scheduled':'failed'),detail,ads_attempt_count:attempt,ads_next_attempt_at_utc:nextAttempt}}];
+'''
+
+
+BUILD_RETRACTION_ALERT_JS = r'''
+const item = $json || {};
+const result = String(item.ads_result || '');
+const attempt = Number(item.ads_attempt_count || 0);
+const terminal = ['failed','expired','lead_not_found','not_eligible'].includes(result);
+const scheduledNotice = result === 'retry_scheduled' && [1,4,8,12,20,28,36,44].includes(attempt);
+if (!terminal && !scheduledNotice) return [];
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const prefix = terminal ? '[ACTION REQUIRED] ' : '[RETRACTION RETRY] ';
+const subject = prefix + 'DCT lead ' + String(item.lead_order_id || 'unknown');
+const html = '<div style="font-family:Arial,sans-serif"><h2>DCT conversion retraction</h2><p><strong>Order:</strong> ' + esc(item.lead_order_id) + '</p><p><strong>Result:</strong> ' + esc(result) + '</p><p><strong>Attempt:</strong> ' + esc(attempt) + '</p><p><strong>Next attempt:</strong> ' + esc(item.ads_next_attempt_at_utc || 'none') + '</p><pre style="white-space:pre-wrap">' + esc(item.detail || '') + '</pre></div>';
+return [{json:{...item,retraction_alert_subject:subject,retraction_alert_html:html}}];
 '''
 
 
@@ -518,15 +716,38 @@ def patch_main_workflow(workflow: dict) -> dict:
     by_name["Format Lead Email"] = code_node("Format Lead Email", "format-email", (-140, 0), MAIN_FORMAT_JS)
     by_name["Build Lead Sheet Row"] = code_node("Build Lead Sheet Row", "dct-build-lead-sheet-row", (100, -20), BUILD_LEAD_SHEET_ROW_JS)
     by_name["Log Lead to Google Sheet"] = sheet_append_node("Log Lead to Google Sheet", "dct-log-lead-sheet", (340, -20), "Leads")
-    by_name["Build Ads Outcome Row"] = code_node("Build Ads Outcome Row", "dct-build-ads-outcome-row", (960, 80), BUILD_ADS_OUTCOME_JS, on_error="continueRegularOutput")
+    by_name["Restore Lead After Logging"] = code_node("Restore Lead After Logging", "dct-restore-lead-after-log", (560, -20), "return [{json:{...$('Format Lead Email').first().json}}];")
+    by_name["Build Ads Upload"] = code_node("Build Ads Upload", "build-ads-upload", (780, 80), BUILD_ADS_UPLOAD_JS)
+    by_name["IF Queue GCLID in Data Manager"] = if_node("IF Queue GCLID in Data Manager", "dct-if-queue-data-manager", (1000, 80), "={{ String($json.queue_data_manager) }}", "true")
+    by_name["Build Data Manager Queue Row"] = code_node("Build Data Manager Queue Row", "dct-build-data-manager-row", (1220, 0), BUILD_DATA_MANAGER_ROW_JS)
+    by_name["Append Data Manager Queue"] = sheet_append_node(
+        "Append Data Manager Queue", "dct-append-data-manager-queue", (1440, 0), DATA_MANAGER_SHEET_TAB,
+        document_id=DATA_MANAGER_SHEET_ID,
+    )
+    by_name["Check Data Manager Queue"] = code_node("Check Data Manager Queue", "dct-check-data-manager-queue", (1660, 0), CHECK_DATA_MANAGER_QUEUE_JS, on_error="continueRegularOutput")
+    by_name["Get Google OAuth Token"] = oauth_node("Get Google OAuth Token", "get-google-token", (1880, 80))
+    by_name["Upload Click Conversion"] = ads_http_node(
+        "Upload Click Conversion", "upload-click-conversion", (2100, 80), "uploadClickConversions",
+        "={{ $('Build Ads Upload').first().json.google_ads_request }}",
+    )
+    by_name["Parse Ads Upload"] = code_node("Parse Ads Upload", "parse-ads-upload", (2320, 80), PARSE_ADS_UPLOAD_JS, on_error="continueRegularOutput")
+    by_name["Build Ads Failure Alert"] = code_node("Build Ads Failure Alert", "build-ads-alert", (2540, 0), BUILD_ADS_ALERT_JS)
+    by_name["Send Ads Failure Alert"] = alert_email_node(
+        "Send Ads Failure Alert", "send-ads-alert", (2760, 0),
+        "={{ $json.ads_alert_subject }}", "={{ $json.ads_alert_html }}",
+    )
+    by_name["Build Ads Outcome Row"] = code_node("Build Ads Outcome Row", "dct-build-ads-outcome-row", (2540, 160), BUILD_ADS_OUTCOME_JS, on_error="continueRegularOutput")
     by_name["Update Lead Ads Outcome"] = sheet_update_node(
-        "Update Lead Ads Outcome", "dct-update-lead-ads-outcome", (1180, 80), "Leads", "lead_order_id",
+        "Update Lead Ads Outcome", "dct-update-lead-ads-outcome", (2760, 160), "Leads", "lead_order_id",
         {"ads_upload_status": "", "ads_upload_error": "", "ads_conversion_action": "", "ads_uploaded_at_utc": ""},
     )
 
     replacements = {
         "Hash Action Token", "Format Lead Email", "Build Lead Sheet Row", "Log Lead to Google Sheet",
-        "Build Ads Outcome Row", "Update Lead Ads Outcome",
+        "Restore Lead After Logging", "Build Ads Upload", "IF Queue GCLID in Data Manager",
+        "Build Data Manager Queue Row", "Append Data Manager Queue", "Check Data Manager Queue",
+        "Get Google OAuth Token", "Upload Click Conversion", "Parse Ads Upload",
+        "Build Ads Failure Alert", "Send Ads Failure Alert", "Build Ads Outcome Row", "Update Lead Ads Outcome",
     }
     original_nodes = workflow.get("nodes", [])
     workflow["nodes"] = [
@@ -542,11 +763,19 @@ def patch_main_workflow(workflow: dict) -> dict:
     c["Hash Action Token"] = {"main": [[{"node": "Format Lead Email", "type": "main", "index": 0}]]}
     c["Format Lead Email"] = {"main": [[
         {"node": "Send Email Notification", "type": "main", "index": 0},
-        {"node": "Build Ads Upload", "type": "main", "index": 0},
         {"node": "Build Lead Sheet Row", "type": "main", "index": 0},
     ]]}
     c["Build Lead Sheet Row"] = {"main": [[{"node": "Log Lead to Google Sheet", "type": "main", "index": 0}]]}
-    c["Build Ads Upload"] = {"main": [[{"node": "Get Google OAuth Token", "type": "main", "index": 0}]]}
+    c["Log Lead to Google Sheet"] = {"main": [[{"node": "Restore Lead After Logging", "type": "main", "index": 0}]]}
+    c["Restore Lead After Logging"] = {"main": [[{"node": "Build Ads Upload", "type": "main", "index": 0}]]}
+    c["Build Ads Upload"] = {"main": [[{"node": "IF Queue GCLID in Data Manager", "type": "main", "index": 0}]]}
+    c["IF Queue GCLID in Data Manager"] = {"main": [
+        [{"node": "Build Data Manager Queue Row", "type": "main", "index": 0}],
+        [{"node": "Get Google OAuth Token", "type": "main", "index": 0}],
+    ]}
+    c["Build Data Manager Queue Row"] = {"main": [[{"node": "Append Data Manager Queue", "type": "main", "index": 0}]]}
+    c["Append Data Manager Queue"] = {"main": [[{"node": "Check Data Manager Queue", "type": "main", "index": 0}]]}
+    c["Check Data Manager Queue"] = {"main": [[{"node": "Get Google OAuth Token", "type": "main", "index": 0}]]}
     c["Get Google OAuth Token"] = {"main": [[{"node": "Upload Click Conversion", "type": "main", "index": 0}]]}
     c["Upload Click Conversion"] = {"main": [[{"node": "Parse Ads Upload", "type": "main", "index": 0}]]}
     c["Parse Ads Upload"] = {"main": [[
@@ -590,17 +819,23 @@ def action_workflow_definition() -> dict:
         respond_html_node("Respond Invalid DCT Action POST", "dct-respond-invalid-post", (1100, 380), "={{ $json.error_html }}"),
 
         schedule_node("Process DCT Action Events", "dct-action-worker-schedule", (0, 660), 1),
-        sheet_read_node("Read DCT Action Events", "dct-read-action-events", (220, 660), "Lead Actions", "A:N"),
+        sheet_read_node("Read DCT Action Events", "dct-read-action-events", (220, 660), "Lead Actions", "A:P"),
         code_node("Pick Next DCT Action", "dct-pick-action-event", (440, 660), PICK_EVENT_JS),
         sheet_read_node("Read DCT Lead for Action", "dct-read-lead-event", (660, 660), "Leads", "A:AZ", lookup_column="lead_order_id", lookup_value="={{ $('Pick Next DCT Action').first().json.lead_order_id || '' }}", always_output=True),
         code_node("Decide DCT Action", "dct-decide-action", (880, 660), DECIDE_EVENT_JS),
         if_node("IF Update DCT Lead", "dct-if-update-lead", (1100, 660), "={{ String($json._write_lead) }}", "true"),
         sheet_update_node("Update DCT Lead Manual Action", "dct-update-lead-manual-action", (1320, 600), "Leads", "lead_order_id", {"manual_action":""}),
-        code_node("Restore DCT Action Event", "dct-restore-action-event", (1540, 600), "return [{json:{...$('Decide DCT Action').first().json}}];"),
-        sheet_update_node("Update DCT Action Outcome", "dct-update-action-outcome", (1760, 660), "Lead Actions", "event_id", {"processed_at_utc":"","result":"","ads_due_at_utc":"","ads_processed_at_utc":"","ads_result":"","ads_conversion_action":"","detail":""}),
+        if_node("IF Stop DCT Data Manager Retry", "dct-if-stop-data-manager", (1540, 600), "={{ String($json._disable_data_manager) }}", "true"),
+        sheet_update_values_node(
+            "Stop DCT Data Manager Retry", "dct-stop-data-manager-retry", (1760, 540), DATA_MANAGER_SHEET_TAB, "Order ID",
+            {"Order ID": "={{ $json.lead_order_id }}", "Import status": "={{ $json.dm_import_status }}"},
+            document_id=DATA_MANAGER_SHEET_ID,
+        ),
+        code_node("Restore DCT Action Event", "dct-restore-action-event", (1980, 600), "return [{json:{...$('Decide DCT Action').first().json}}];"),
+        sheet_update_node("Update DCT Action Outcome", "dct-update-action-outcome", (2200, 660), "Lead Actions", "event_id", {"processed_at_utc":"","result":"","ads_due_at_utc":"","ads_processed_at_utc":"","ads_result":"","ads_conversion_action":"","detail":"","ads_attempt_count":"","ads_next_attempt_at_utc":""}),
 
         schedule_node("Process Due DCT Retractions", "dct-retraction-worker-schedule", (0, 1040), 15),
-        sheet_read_node("Read DCT Retraction Events", "dct-read-retraction-events", (220, 1040), "Lead Actions", "A:N"),
+        sheet_read_node("Read DCT Retraction Events", "dct-read-retraction-events", (220, 1040), "Lead Actions", "A:P"),
         code_node("Pick Due DCT Retraction", "dct-pick-due-retraction", (440, 1040), PICK_DUE_RETRACTION_JS),
         sheet_read_node("Read DCT Lead for Retraction", "dct-read-lead-retraction", (660, 1040), "Leads", "A:AZ", lookup_column="lead_order_id", lookup_value="={{ $('Pick Due DCT Retraction').first().json.lead_order_id || '' }}", always_output=True),
         code_node("Prepare DCT Retraction", "dct-prepare-retraction", (880, 1040), PREPARE_RETRACTION_JS),
@@ -612,7 +847,9 @@ def action_workflow_definition() -> dict:
         code_node("Restore DCT Parsed Retraction", "dct-restore-parsed-retraction", (2200, 980), "return [{json:{...$('Parse DCT Retraction Result').first().json}}];"),
         sheet_update_node("Update DCT Lead Retraction State", "dct-update-lead-retraction-state", (1320, 1160), "Leads", "lead_order_id", {"manual_action":"","retraction_processed_at_utc":""}),
         code_node("Restore DCT Prepared Retraction", "dct-restore-prepared-retraction", (1540, 1160), "return [{json:{...$('Prepare DCT Retraction').first().json}}];"),
-        sheet_update_node("Update DCT Retraction Event", "dct-update-retraction-event", (2420, 1040), "Lead Actions", "event_id", {"ads_processed_at_utc":"","ads_result":"","ads_conversion_action":"","detail":""}),
+        sheet_update_node("Update DCT Retraction Event", "dct-update-retraction-event", (2420, 1040), "Lead Actions", "event_id", {"ads_processed_at_utc":"","ads_result":"","ads_conversion_action":"","detail":"","ads_attempt_count":"","ads_next_attempt_at_utc":""}),
+        code_node("Build DCT Retraction Alert", "dct-build-retraction-alert", (2420, 880), BUILD_RETRACTION_ALERT_JS),
+        alert_email_node("Send DCT Retraction Alert", "dct-send-retraction-alert", (2640, 880), "={{ $json.retraction_alert_subject }}", "={{ $json.retraction_alert_html }}"),
     ]
 
     c = {}
@@ -636,7 +873,9 @@ def action_workflow_definition() -> dict:
     connect(c, "Read DCT Lead for Action", "Decide DCT Action")
     connect(c, "Decide DCT Action", "IF Update DCT Lead")
     connect_if(c, "IF Update DCT Lead", "Update DCT Lead Manual Action", "Update DCT Action Outcome")
-    connect(c, "Update DCT Lead Manual Action", "Restore DCT Action Event")
+    connect(c, "Update DCT Lead Manual Action", "IF Stop DCT Data Manager Retry")
+    connect_if(c, "IF Stop DCT Data Manager Retry", "Stop DCT Data Manager Retry", "Restore DCT Action Event")
+    connect(c, "Stop DCT Data Manager Retry", "Restore DCT Action Event")
     connect(c, "Restore DCT Action Event", "Update DCT Action Outcome")
 
     connect(c, "Process Due DCT Retractions", "Read DCT Retraction Events")
@@ -649,9 +888,10 @@ def action_workflow_definition() -> dict:
     connect(c, "Upload DCT Conversion Retraction", "Parse DCT Retraction Result")
     connect(c, "Parse DCT Retraction Result", "Update DCT Lead Retraction Result")
     connect(c, "Update DCT Lead Retraction Result", "Restore DCT Parsed Retraction")
-    connect(c, "Restore DCT Parsed Retraction", "Update DCT Retraction Event")
+    connect(c, "Restore DCT Parsed Retraction", "Update DCT Retraction Event", "Build DCT Retraction Alert")
     connect(c, "Update DCT Lead Retraction State", "Restore DCT Prepared Retraction")
-    connect(c, "Restore DCT Prepared Retraction", "Update DCT Retraction Event")
+    connect(c, "Restore DCT Prepared Retraction", "Update DCT Retraction Event", "Build DCT Retraction Alert")
+    connect(c, "Build DCT Retraction Alert", "Send DCT Retraction Alert")
 
     return {"name": ACTION_WORKFLOW_NAME, "nodes": nodes, "connections": c,
             "settings": {"executionOrder": "v1", "callerPolicy": "workflowsFromSameOwner", "availableInMCP": False}}
