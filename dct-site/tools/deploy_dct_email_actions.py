@@ -741,6 +741,15 @@ def patch_main_workflow(workflow: dict) -> dict:
         "Update Lead Ads Outcome", "dct-update-lead-ads-outcome", (2760, 160), "Leads", "lead_order_id",
         {"ads_upload_status": "", "ads_upload_error": "", "ads_conversion_action": "", "ads_uploaded_at_utc": ""},
     )
+    by_name["IF Mark DCT Queue Uploaded"] = if_node(
+        "IF Mark DCT Queue Uploaded", "dct-if-mark-data-manager-uploaded", (2540, 320),
+        "={{ String($json.ads_upload_accepted && $json.ads_route === 'gclid' && !$json.ads_validate_only) }}", "true",
+    )
+    by_name["Mark DCT Queue Uploaded"] = sheet_update_values_node(
+        "Mark DCT Queue Uploaded", "dct-mark-data-manager-uploaded", (2760, 320), DATA_MANAGER_SHEET_TAB, "Order ID",
+        {"Order ID": "={{ $json.lead_order_id }}", "Import status": "uploaded_api"},
+        document_id=DATA_MANAGER_SHEET_ID,
+    )
 
     replacements = {
         "Hash Action Token", "Format Lead Email", "Build Lead Sheet Row", "Log Lead to Google Sheet",
@@ -748,6 +757,7 @@ def patch_main_workflow(workflow: dict) -> dict:
         "Build Data Manager Queue Row", "Append Data Manager Queue", "Check Data Manager Queue",
         "Get Google OAuth Token", "Upload Click Conversion", "Parse Ads Upload",
         "Build Ads Failure Alert", "Send Ads Failure Alert", "Build Ads Outcome Row", "Update Lead Ads Outcome",
+        "IF Mark DCT Queue Uploaded", "Mark DCT Queue Uploaded",
     }
     original_nodes = workflow.get("nodes", [])
     workflow["nodes"] = [
@@ -781,9 +791,14 @@ def patch_main_workflow(workflow: dict) -> dict:
     c["Parse Ads Upload"] = {"main": [[
         {"node": "Build Ads Failure Alert", "type": "main", "index": 0},
         {"node": "Build Ads Outcome Row", "type": "main", "index": 0},
+        {"node": "IF Mark DCT Queue Uploaded", "type": "main", "index": 0},
     ]]}
     c["Build Ads Outcome Row"] = {"main": [[{"node": "Update Lead Ads Outcome", "type": "main", "index": 0}]]}
     c["Build Ads Failure Alert"] = {"main": [[{"node": "Send Ads Failure Alert", "type": "main", "index": 0}]]}
+    c["IF Mark DCT Queue Uploaded"] = {"main": [
+        [{"node": "Mark DCT Queue Uploaded", "type": "main", "index": 0}],
+        [],
+    ]}
     return workflow
 
 
