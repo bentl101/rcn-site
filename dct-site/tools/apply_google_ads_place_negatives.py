@@ -39,8 +39,9 @@ CAMPAIGN = "customers/3639225242/campaigns/24230451785"
 COUNTRY_LIST = "DCT | Global Country Negatives"
 CITY_LIST = "DCT | Global City Negatives"
 SEARCH_LIST = "DCT | Global Search Exclusions"
+COMPETITOR_LIST = "DCT | Competitor Tour Operators"
 
-SEARCH_ADDITIONS = [("short", "BROAD")]
+SEARCH_ADDITIONS = [("short", "BROAD")] + places.intent_terms()
 
 # Same set the negatives tool protects. Anything here can never be blocked.
 PROTECTED_DESTINATIONS = {
@@ -222,6 +223,23 @@ def build_plan(state: dict[str, Any]) -> dict[str, Any]:
     if city_set and city_set.get("status") != "ENABLED":
         plan["blockers"].append(f"{CITY_LIST} exists but is {city_set.get('status')}")
 
+    # 2b. competitor list
+    comp_set = sets.get(COMPETITOR_LIST)
+    comp_rn = comp_set["resourceName"] if comp_set else None
+    comp_have = criteria.get(comp_rn, {}) if comp_rn else {}
+    comp_add = [t for t in places.competitor_terms() if key(*t) not in comp_have]
+    plan["competitor"] = {
+        "resource": comp_rn,
+        "create_needed": comp_set is None,
+        "status": comp_set.get("status") if comp_set else None,
+        "current_count": len(comp_have),
+        "add_count": len(comp_add),
+        "attach_needed": comp_rn not in attached,
+        "_add": comp_add,
+    }
+    if comp_set and comp_set.get("status") != "ENABLED":
+        plan["blockers"].append(f"{COMPETITOR_LIST} exists but is {comp_set.get('status')}")
+
     # 3. search exclusions
     search_add = [t for t in SEARCH_ADDITIONS if key(*t) not in search_have]
     plan["search"] = {
@@ -232,7 +250,7 @@ def build_plan(state: dict[str, Any]) -> dict[str, Any]:
     }
 
     # validation against live positives and the collision table
-    all_new = country_add + city_add + search_add
+    all_new = country_add + city_add + comp_add + search_add
     plan["blockers"].extend(validate(all_new, state["positives"]))
     plan["positive_keywords_checked"] = len(state["positives"])
     plan["new_terms_total"] = len(all_new)
@@ -242,7 +260,7 @@ def build_plan(state: dict[str, Any]) -> dict[str, Any]:
 
 def public(plan: dict[str, Any]) -> dict[str, Any]:
     out = json.loads(json.dumps(plan))
-    for section in ("country", "city", "search"):
+    for section in ("country", "city", "competitor", "search"):
         for k in [k for k in out.get(section, {}) if k.startswith("_")]:
             out[section].pop(k)
     return out
@@ -279,6 +297,22 @@ def apply_changes(env: dict[str, str], token: str, plan: dict[str, Any]) -> dict
         }])
         result["city_list_attached"] = True
 
+    # 2b. competitor list: create, fill, attach
+    comp = plan["competitor"]
+    comp_rn = comp["resource"]
+    if comp["create_needed"]:
+        payload = mutate(env, token, "sharedSets", [{
+            "create": {"name": COMPETITOR_LIST, "type": "NEGATIVE_KEYWORDS"}
+        }])
+        comp_rn = payload["results"][0]["resourceName"]
+        result["competitor_list_created"] = comp_rn
+    result["competitor_terms_added"] = add_terms(comp_rn, comp["_add"])
+    if comp["attach_needed"]:
+        mutate(env, token, "campaignSharedSets", [{
+            "create": {"campaign": CAMPAIGN, "sharedSet": comp_rn}
+        }])
+        result["competitor_list_attached"] = True
+
     # 1. country additions
     country = plan["country"]
     result["country_terms_added"] = add_terms(country["resource"], country["_add"])
@@ -298,7 +332,7 @@ def verify_state(state: dict[str, Any]) -> dict[str, Any]:
     report: dict[str, Any] = {"customer_id": CID, "campaign": CAMPAIGN, "problems": []}
     sets, criteria, attached = state["sets"], state["criteria"], state["attached"]
 
-    for name in (COUNTRY_LIST, CITY_LIST, SEARCH_LIST):
+    for name in (COUNTRY_LIST, CITY_LIST, COMPETITOR_LIST, SEARCH_LIST):
         s = sets.get(name)
         if not s:
             report["problems"].append(f"missing: {name}")
@@ -329,6 +363,12 @@ def verify_state(state: dict[str, Any]) -> dict[str, Any]:
                    if key(t, m) not in have]
         if missing:
             report["problems"].append(f"city list missing {len(missing)} terms: {missing[:5]}")
+    if COMPETITOR_LIST in sets:
+        have = criteria.get(sets[COMPETITOR_LIST]["resourceName"], {})
+        missing = [f"{t} [{m}]" for t, m in places.competitor_terms()
+                   if key(t, m) not in have]
+        if missing:
+            report["problems"].append(f"competitor list missing {len(missing)} terms: {missing[:5]}")
     if SEARCH_LIST in sets:
         have = criteria.get(sets[SEARCH_LIST]["resourceName"], {})
         for t, m in SEARCH_ADDITIONS:
@@ -337,7 +377,7 @@ def verify_state(state: dict[str, Any]) -> dict[str, Any]:
 
     # the live lists must not block any live positive keyword
     conflicts = []
-    for name in (COUNTRY_LIST, CITY_LIST, SEARCH_LIST):
+    for name in (COUNTRY_LIST, CITY_LIST, COMPETITOR_LIST, SEARCH_LIST):
         if name not in sets:
             continue
         for (text, match) in criteria.get(sets[name]["resourceName"], {}):

@@ -23,7 +23,8 @@ SEARCH_LIST_NAME = "DCT | Global Search Exclusions"
 # Added 11 Sep 2026 by apply_google_ads_place_negatives.py. This tool does not
 # manage its contents but must recognise it, or it refuses to run.
 CITY_LIST_NAME = "DCT | Global City Negatives"
-KNOWN_LIST_NAMES = {COUNTRY_LIST_NAME, SEARCH_LIST_NAME, CITY_LIST_NAME}
+COMPETITOR_LIST_NAME = "DCT | Competitor Tour Operators"  # added 12 Sep 2026
+KNOWN_LIST_NAMES = {COUNTRY_LIST_NAME, SEARCH_LIST_NAME, CITY_LIST_NAME, COMPETITOR_LIST_NAME}
 
 PROTECTED_DESTINATIONS = {
     "england",

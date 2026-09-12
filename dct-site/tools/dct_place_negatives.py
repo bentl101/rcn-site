@@ -28,11 +28,22 @@ carries ``Canada`` as a broad negative blocks ``trafalgar tours canada`` -
 the exact query its own headline "Trafalgar Tours Canada" was written for.
 The phrase terms below still exclude tours *of* Canada without doing that.
 
-Deliberately NOT included: the provinces people live in (Ontario, Quebec,
-British Columbia, Alberta, Manitoba, Saskatchewan). A broad ``ontario`` has
-the same failure as broad ``canada`` one level down: it blocks ``trafalgar
-tours ontario`` from a prospect in Ontario. The Atlantic provinces and Yukon
-are included because they are destinations, not where the audience lives.
+Residence provinces (Ontario, Quebec, Alberta, Saskatchewan, Manitoba) were
+left out on 11 Sep 2026 on the theory that a broad ``ontario`` would block
+``[brand] tours ontario`` from a prospect. The first search-terms report
+(12 Sep) showed the opposite in practice: every province query was local
+product - ``day trips for seniors in ontario``, ``bus tours to quebec``,
+``saskatchewan bus tours for seniors`` - and no brand-plus-province query
+appeared at all. They are now in, broad, at Ben's call. British Columbia
+stays out because its abbreviation ``bc`` is too short to be safe broad and
+the full name never appeared.
+
+Also fed from here since 12 Sep 2026:
+
+* ``DCT | Competitor Tour Operators`` (new) - Canadian domestic coach
+  companies and Europe-direct competitors seen in the search terms.
+* Intent exclusions (``near me``, ``day trip``, ``tour bus``...) go to
+  ``DCT | Global Search Exclusions``.
 """
 from __future__ import annotations
 
@@ -59,6 +70,8 @@ CANADA_REGIONS = [
     "yukon", "maritimes", "newfoundland", "labrador", "nova scotia",
     "new brunswick", "prince edward island", "cabot trail", "gaspe",
     "quebec city", "northwest territories", "nunavut",
+    # residence provinces - added 12 Sep 2026 from search-terms evidence
+    "ontario", "quebec", "alberta", "saskatchewan", "manitoba", "pei",
 ]
 
 # --- country list: US states and national parks ----------------------------
@@ -119,7 +132,7 @@ CANADA_CITIES = [
 
 US_CITIES = [
     # Single-word (broad)
-    "chicago", "houston", "phoenix", "philadelphia", "dallas", "austin",
+    "nyc", "chicago", "houston", "phoenix", "philadelphia", "dallas", "austin",
     "jacksonville", "columbus", "charlotte", "indianapolis", "seattle",
     "denver", "boston", "nashville", "detroit", "portland", "louisville",
     "baltimore", "milwaukee", "albuquerque", "tucson", "fresno",
@@ -228,8 +241,40 @@ COLLISION_EXCLUDED = {
     "washington": "needs dc/state qualifier",
     "hanover": "Germany",
     "glasgow": "Scotland ('new glasgow' phrase is fine)",
-    "salem": "also Salem, India",
 }
+
+
+# --- competitor list ---------------------------------------------------------
+# Every one appeared in the search-terms report of 12 Sep 2026. Domestic
+# day-trip and coach companies, plus operators selling Europe direct that DCT
+# does not resell. Add to this as new ones show up.
+COMPETITOR_OPERATORS = [
+    "great canadian", "front line", "collette", "approach tours",
+    "comfort tours", "go ahead", "exoticca", "rabbies", "caa", "taipan",
+    "protours", "fehrway", "wnax", "concorde", "concord tours", "maple leaf",
+    "diamond tours", "collins tours", "atlantic tours", "jump in travel",
+    "tours of distinction", "shoptravel", "shorttrips", "salem",
+]
+
+# --- intent exclusions (search-exclusion list) -------------------------------
+# Query shapes that are never a coach-tour buyer. ``tour bus`` as a phrase
+# does NOT match ``bus tour`` - order matters, and that is the point.
+INTENT_EXCLUSIONS = [
+    "near me", "day trip", "day trips", "tour bus", "schedule", "reviews",
+    "tour companies", "long stay", "free", "heathrow", "airport",
+]
+
+
+def _typed(terms: list[str]) -> list[tuple[str, str]]:
+    return [(t, "PHRASE" if " " in t else "BROAD") for t in terms]
+
+
+def competitor_terms() -> list[tuple[str, str]]:
+    return _typed(COMPETITOR_OPERATORS)
+
+
+def intent_terms() -> list[tuple[str, str]]:
+    return _typed(INTENT_EXCLUSIONS)
 
 
 def canada_replacement_terms() -> list[tuple[str, str]]:
