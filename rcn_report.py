@@ -712,6 +712,33 @@ def run_health():
     if expected >= 3 and counts.get('good_uploaded', 0) < expected:
         alerts.append(f'🚨 Only {counts["good_uploaded"]} of {expected} upload-eligible good leads were '
                       f'accepted by Google Ads yesterday — check the Upload Click Conversion node.')
+    # 3. n8n's OWN credentials. Check #1 above tests ~/.secrets, which is a different
+    # OAuth grant from the one in the n8n container's env. On 12 Sep 2026 the n8n token
+    # died at ~11:30 UTC and this report said "All good" the next morning because its
+    # own token was fine and the day's 2 failed uploads sat under the expected>=3 gate.
+    # Reading the OAuth node's output in the last 24h catches it regardless of volume.
+    no_token = []
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    for e in execs:
+        if (e.get('startedAt') or '') < cutoff:
+            continue
+        rd = e.get('data', {}).get('resultData', {}).get('runData', {})
+        node = rd.get('Get Google OAuth Token')
+        if not node:
+            continue
+        out = ((node[0].get('data') or {}).get('main') or [[]])[0]
+        j = out[0].get('json', {}) if out else {}
+        if not j.get('access_token'):
+            ps = rd.get('Parse Score')
+            pj = (((ps[0].get('data') or {}).get('main') or [[]])[0] or [{}])[0].get('json', {}) if ps else {}
+            no_token.append(pj.get('body', {}).get('lead_order_id', e.get('startedAt', '?')[:16]))
+    if no_token:
+        alerts.append(f'🚨 n8n could not mint a Google Ads access token for {len(no_token)} upload(s) in the '
+                      f'last 24h — its refresh token is probably revoked (invalid_grant). Run '
+                      f'ops/reissue_google_ads_token.py, then conversion_worker.py --upload-order for: '
+                      + ', '.join(no_token[:6]) + (' …' if len(no_token) > 6 else ''))
+    else:
+        info.append('n8n Google Ads token: OK (every upload in the last 24h minted a token)')
     # heartbeat info
     if spend is not None: info.append(f'Spend yesterday: {money(spend)}')
     info.append(f'Yesterday ({y}): {counts["total"]} scored — '

@@ -254,6 +254,9 @@ COMPETITOR_OPERATORS = [
     "protours", "fehrway", "wnax", "concorde", "concord tours", "maple leaf",
     "diamond tours", "collins tours", "atlantic tours", "jump in travel",
     "tours of distinction", "shoptravel", "shorttrips", "salem",
+    # 12 Sep (second report): bus-ticketing and more domestic operators
+    "flixbus", "senior discovery", "dreamtour", "sunrise tours",
+    "west world", "matrix tours", "stewart travel",
 ]
 
 # --- intent exclusions (search-exclusion list) -------------------------------
@@ -262,6 +265,13 @@ COMPETITOR_OPERATORS = [
 INTENT_EXCLUSIONS = [
     "near me", "day trip", "day trips", "tour bus", "schedule", "reviews",
     "tour companies", "long stay", "free", "heathrow", "airport",
+    # Google negatives do NOT match plurals or close variants. The list had
+    # "complaint" and "river cruise" and still let "cosmos travel reviews
+    # complaints" and "trafalgar river cruises" through. Both forms needed.
+    "complaints", "review", "river cruises",
+    # bus-ticket buyers (FlixBus/Greyhound intent) and navigational queries
+    # for the operator's own site ("trafalgar com", "globus com").
+    "ticket", "tickets", "website", "login", "com",
 ]
 
 
