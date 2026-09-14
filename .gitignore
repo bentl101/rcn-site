@@ -11,6 +11,7 @@ rcn-secrets.php
 # Lead data (PII) — never commit
 leads.csv
 leads-*.csv
+report-daily-ledger.json
 
 # Node
 node_modules/

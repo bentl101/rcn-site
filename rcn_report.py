@@ -36,8 +36,8 @@ REPORT_FROM      = 'hello@copperchunk.com'
 #   'offline (upload) - iOS'  — gbraid/wbraid (count Every)
 # Sum both for "good leads credited in Ads".
 OFFLINE_ACTIONS = ['offline (upload)', 'offline (upload) - iOS']
-LEGACY_ACTION   = 'Legacy submit lead form'  # every form completion (client-side baseline)
 ACCOUNT_TZ      = ZoneInfo('America/Toronto')
+DAILY_LEDGER_FILE = pathlib.Path(__file__).with_name('report-daily-ledger.json')
 
 def account_today():
     return datetime.now(ACCOUNT_TZ).date()
@@ -256,6 +256,74 @@ def retry_orders():
     if state.get('version') != 1 or not isinstance(state.get('orders'), dict):
         raise ValueError('Invalid RCN conversion retry ledger')
     return state['orders']
+
+
+def daily_report_ledger():
+    """Durable daily aggregates so weekly/monthly reports outlive n8n retention."""
+    if not DAILY_LEDGER_FILE.exists():
+        return {}
+    state = json.loads(DAILY_LEDGER_FILE.read_text())
+    if state.get('version') != 1 or not isinstance(state.get('days'), dict):
+        raise ValueError('Invalid RCN daily report ledger')
+    return state['days']
+
+
+def save_daily_report(day_d, counts, leads):
+    """Atomically upsert one complete account-day snapshot."""
+    try:
+        days = daily_report_ledger()
+    except (OSError, ValueError):
+        days = {}
+    days[day_d.isoformat()] = {
+        'counts': {key: int(counts.get(key, 0)) for key in (
+            'send_to_sales', 'review', 'suppress', 'total',
+            'good_uploaded', 'good_rejected')},
+        'leads': leads,
+        'recorded_at': datetime.now(timezone.utc).isoformat(),
+    }
+    payload = json.dumps({'version': 1, 'days': days}, ensure_ascii=False, indent=2)
+    tmp = DAILY_LEDGER_FILE.with_suffix('.json.tmp')
+    tmp.write_text(payload)
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, DAILY_LEDGER_FILE)
+
+
+def report_breakdown(execs, start_d, end_d, action_execs=None, action_workflow=None,
+                     recovery_orders=None):
+    """Combine durable daily snapshots with live n8n data, one account day at a time."""
+    try:
+        ledger = daily_report_ledger()
+    except (OSError, ValueError):
+        ledger = {}
+    live_counts, live_leads, covered_min = lead_breakdown(
+        execs, start_d, end_d, action_execs, action_workflow, recovery_orders)
+    if start_d == end_d:
+        # Yesterday is still wholly present in n8n when the daily cron runs.
+        complete = covered_min is not None and covered_min < start_d
+        return live_counts, live_leads, covered_min, complete
+
+    combined = {key: 0 for key in live_counts}
+    leads, complete = [], True
+    day_d = start_d
+    while day_d <= end_d:
+        saved = ledger.get(day_d.isoformat())
+        if saved:
+            for key in combined:
+                combined[key] += int((saved.get('counts') or {}).get(key, 0))
+            leads.extend(saved.get('leads') or [])
+        elif covered_min is not None and day_d > covered_min:
+            day_counts, day_leads, _ = lead_breakdown(
+                execs, day_d, day_d, action_execs, action_workflow, recovery_orders)
+            for key in combined:
+                combined[key] += int(day_counts.get(key, 0))
+            leads.extend(day_leads)
+        else:
+            # The oldest retained n8n day may begin halfway through the day, so
+            # never present that boundary as complete without a saved snapshot.
+            complete = False
+        day_d += timedelta(days=1)
+    leads.sort(key=lambda item: item.get('when') or '')
+    return combined, leads, covered_min, complete
 
 
 def recovered_upload(body, orders):
@@ -522,11 +590,14 @@ def money(x): return f'${x:,.2f} CAD'
 def count_value(x):
     return f'{int(round(x)):,}' if abs(x - round(x)) < 0.0005 else f'{x:,.1f}'
 
-def executive_summary_html(metrics, good_ads, regions):
+def executive_summary_html(metrics, counts, uploaded, good_ads, regions):
+    accepted_cpl = money(metrics['cost'] / uploaded) if uploaded else 'n/a'
     items = [
         f'<li><b>Full-period Ads:</b> {money(metrics["cost"])} spend generated '
-        f'{metrics["clicks"]:,} clicks and {metrics["impressions"]:,} impressions, with '
-        f'{count_value(good_ads)} qualified lead conversions credited in Google Ads.</li>'
+        f'{metrics["clicks"]:,} clicks and {metrics["impressions"]:,} impressions.</li>',
+        f'<li><b>Lead outcome:</b> {counts["total"]} submissions were scored; '
+        f'{counts["send_to_sales"]} qualified for sales and {uploaded} unique good leads '
+        f'were accepted by Google Ads, at {accepted_cpl} per accepted good lead.</li>'
     ]
     if regions and metrics['cost']:
         top = regions[0]
@@ -534,8 +605,8 @@ def executive_summary_html(metrics, good_ads, regions):
         cpl = money(top['cost'] / top['good_leads']) if top['good_leads'] else 'n/a'
         items.append(
             f'<li><b>Largest physical region:</b> {html_lib.escape(top["label"])} represented '
-            f'{share:.1f}% of spend and {count_value(top["good_leads"])} qualified lead '
-            f'conversions at {cpl} per credited lead.</li>')
+            f'{share:.1f}% of spend. Google attributed {count_value(top["good_leads"])} '
+            f'conversion credit to clicks from that region, at {cpl} attributed CPA.</li>')
     return (f'<h3 style="color:{NAVY};margin-bottom:6px;">Executive summary</h3>'
             f'<ul style="margin-top:6px;padding-left:20px;line-height:1.45;">{"".join(items)}</ul>')
 
@@ -601,13 +672,15 @@ def region_table_html(regions, account_metrics, good_ads, top_n=10):
         '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Spend</th>'
         '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Clicks</th>'
         '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Impr.</th>'
-        '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Good leads</th>'
-        '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Cost / good</th>'
+        '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Ads-attributed conv.</th>'
+        '<th style="padding:6px 7px;border:1px solid #e0e0e0;text-align:right;">Ads CPA</th>'
         f'</tr>{body}</table></div>'
         '<p style="color:#777;font-size:11px;line-height:1.4;margin:7px 0 14px;">'
-        '“Good leads” sums the two qualified offline-upload conversion actions and is '
-        'attributed to the original ad-click date. Fractional values reflect data-driven '
-        'attribution. The top 10 regions are shown; remaining locations are grouped as Other '
+        'This table is an <b>Ads attribution view</b>, not a count of leads submitted during '
+        'the report period. It sums the two qualified offline-upload actions and assigns '
+        'credit to the original ad-click date and region. Fractional values reflect data-driven '
+        'attribution, so its total will not necessarily match the submission-date lead totals '
+        'above. The top 10 regions are shown; remaining locations are grouped as Other '
         'regions. “Unreported by Google” reconciles traffic that Google Ads does not assign '
         'to a reportable province or region.</p>')
 
@@ -616,53 +689,49 @@ def summary_html(tok, label, start_d, end_d, intro_html=''):
     m = ads_metrics(tok, start, end)
     conv = ads_conv_by_action(tok, start, end)
     good_ads  = offline_total(conv)           # both upload actions, Ads-credited (lags ~1–3d)
-    total_ads = conv.get(LEGACY_ACTION, 0)    # Ads baseline form completions (also lags)
     regions = ads_region_performance(tok, start, end) if label in ('weekly', 'monthly') else []
     execs = n8n_execs()
     action_execs = n8n_execs(ACTION_WORKFLOW_ID)
     action_workflow = n8n_workflow(ACTION_WORKFLOW_ID)
-    counts, leads, covered_min = lead_breakdown(
-        execs, start_d, end_d, action_execs, action_workflow
+    recoveries = retry_orders()
+    counts, leads, covered_min, operational_complete = report_breakdown(
+        execs, start_d, end_d, action_execs, action_workflow, recoveries
     )
-    n8n_partial = covered_min is not None and covered_min > start_d
+    n8n_partial = not operational_complete
     uploaded = counts['good_uploaded']        # send_to_sales + click_id ACCEPTED by Google (immediate)
     rejected = counts['good_rejected']        # uploads Google bounced (fake/test click IDs, etc.)
     pw = ' <span style="color:#c77;font-weight:normal;">(recent window)</span>' if n8n_partial else ''
-    # Cost/good lead: use our immediate uploaded count when n8n covers the whole period;
-    # for older periods (monthly, beyond n8n retention) fall back to the now-settled Ads count.
-    basis = uploaded if (uploaded and not n8n_partial) else (good_ads or None)
-    cpl_good = money(m['cost'] / basis) if basis else 'n/a'
-    lead_total_basis = counts['total'] if (counts['total'] and not n8n_partial) else total_ads
+    cpl_good = money(m['cost'] / uploaded) if uploaded and operational_complete else 'n/a'
+    lead_total_basis = counts['total'] if operational_complete else None
     cpl_all = money(m['cost'] / lead_total_basis) if lead_total_basis else 'n/a'
     rows = [
         ('Period', f'{start} → {end}'),
         ('Ad spend', money(m['cost'])),
         ('Clicks', f"{m['clicks']:,}"),
         ('Impressions', f"{m['impressions']:,}"),
-        ('Leads scored (n8n)' + pw, f"{counts['total']}"),
-        ('Good leads — uploaded &amp; accepted by Google' + pw, f'<b>{uploaded}</b>'),
+        ('Submissions scored' + pw, f"{counts['total']}"),
+        ('Qualified submissions sent to sales' + pw, f"{counts['send_to_sales']}"),
+        ('Unique good leads — uploaded &amp; accepted by Google' + pw, f'<b>{uploaded}</b>'),
     ]
     if rejected:
         rows.append(('Uploads rejected by Google <span style="color:#999;font-weight:normal;">(fake/test click IDs)</span>',
                      f'<span style="color:#c62828;">{rejected}</span>'))
     rows += [
-        ('Conversions credited in Ads <span style="color:#999;font-weight:normal;">(settling, ~1–3d lag)</span>', f'{good_ads:g}'),
-        ('Cost / good lead', cpl_good),
-        ('Cost / lead', cpl_all),
+        ('Ads-attributed conversion credit <span style="color:#999;font-weight:normal;">(by original click date; diagnostic only)</span>', f'{good_ads:g}'),
+        ('Cost / accepted good lead', cpl_good),
+        ('Cost / scored submission', cpl_all),
     ]
     inner = intro_html
     if regions:
-        inner += executive_summary_html(m, good_ads, regions)
+        inner += executive_summary_html(m, counts, uploaded, good_ads, regions)
     inner += kpi_table(rows)
     inner += ('<p style="color:#777;font-size:12px;margin:6px 0 14px;">'
-              '“Uploaded &amp; accepted” counts only good leads Google <b>accepted</b> in real time — '
-              'rejected uploads (fake/test click IDs) are excluded. '
-              '“Credited in Ads” lags 1–3 days (offline conversions settle with fractional, '
-              'data-driven attribution) and rises over the following days — so it’s normally '
-              'lower than the accepted count on the morning after. iOS (gbraid/wbraid) conversions '
-              'are modelled and credit more slowly than gclid. Operational good-lead totals '
-              'count each person once per account day; distinct click IDs remain an Ads-credit '
-              'diagnostic.</p>')
+              'Operational totals use the lead submission date in the Ads account timezone. '
+              '“Uploaded &amp; accepted” counts unique good people per account day that Google '
+              '<b>accepted</b>, including confirmed retry recoveries; rejected uploads are excluded. '
+              'The Ads-attributed figure is deliberately labelled diagnostic: Google assigns it '
+              'to the original click date, may report it fractionally, and can revise it while '
+              'offline attribution settles. It is not the period\'s submitted-lead count.</p>')
     inner += region_table_html(regions, m, good_ads)
     # n8n tier split
     if counts['total']:
@@ -690,6 +759,8 @@ def summary_html(tok, label, start_d, end_d, intro_html=''):
                   '<th style="padding:4px 8px;border:1px solid #eee;text-align:left;">Decision</th>'
                   '<th style="padding:4px 8px;border:1px solid #eee;text-align:left;">Destination</th></tr>'
                   f'{rowsh}</table>')
+    if label == 'daily' and start_d == end_d and operational_complete:
+        save_daily_report(start_d, counts, leads)
     return shell(f'RCN {label}: {start} → {end}', inner)
 
 # ───────────────────────── modes ─────────────────────────
