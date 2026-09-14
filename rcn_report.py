@@ -16,6 +16,7 @@ in the n8n nodes + conversion_worker.py + recover_braid.py.
 """
 import html as html_lib
 import os, sys, json, smtplib, urllib.request, urllib.parse, urllib.error
+import pathlib, subprocess
 from datetime import date, datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -241,9 +242,69 @@ def _upload_accepted(rd):
     if not up: return None
     try: r = up[0]['data']['main'][0][0]['json']
     except Exception: return None
-    if r and r.get('results') and not r.get('partialFailureError') and not r.get('error'):
+    if r and any(r.get('results') or []) and not r.get('partialFailureError') and not r.get('error'):
         return True
     return False
+
+
+def retry_orders():
+    """Read the hourly worker's atomic, non-PII recovery ledger."""
+    path = pathlib.Path(__file__).with_name('conversion-retry-state.json')
+    if not path.exists():
+        return {}
+    state = json.loads(path.read_text())
+    if state.get('version') != 1 or not isinstance(state.get('orders'), dict):
+        raise ValueError('Invalid RCN conversion retry ledger')
+    return state['orders']
+
+
+def recovered_upload(body, orders):
+    """Acceptance is action-scoped; a terminal failure is never a recovery."""
+    record = orders.get(body.get('lead_order_id'), {})
+    click_type = str(body.get('click_id_type') or 'gclid').lower()
+    if click_type not in {'gclid', 'gbraid', 'wbraid'}:
+        return False
+    action = '7663805249' if click_type in {'gbraid', 'wbraid'} else '7627192972'
+    return (record.get('status') == 'complete'
+            and record.get('lastOutcome') in {'accepted', 'duplicate'}
+            and record.get('action') == f'customers/{CID}/conversionActions/{action}')
+
+
+def current_n8n_token_health():
+    """Test the running container's grant without exporting any credentials."""
+    script = '''
+const q = new URLSearchParams({client_id:process.env.GOOGLE_ADS_CLIENT_ID,
+  client_secret:process.env.GOOGLE_ADS_CLIENT_SECRET,
+  refresh_token:process.env.GOOGLE_ADS_REFRESH_TOKEN,grant_type:"refresh_token"});
+fetch("https://oauth2.googleapis.com/token", {method:"POST",body:q,
+  signal:AbortSignal.timeout(15000)}).then(async r => {
+  const j = await r.json();
+  console.log(JSON.stringify({ok:r.ok && Boolean(j.access_token),
+    status:r.status,error:typeof j.error === "string" ? j.error : null}));
+}).catch(() => { console.log(JSON.stringify({ok:false,error:"probe_failed"})); });
+'''
+    try:
+        result = subprocess.run(['docker', 'exec', 'n8n', 'node', '-e', script],
+                                capture_output=True, text=True, timeout=25, check=True)
+        return json.loads(result.stdout)
+    except (subprocess.SubprocessError, OSError, ValueError):
+        return {'ok': False, 'error': 'probe_unavailable'}
+
+
+def unresolved_oauth_orders(execs, orders, cutoff):
+    unresolved = set()
+    for execution in execs:
+        if (execution.get('startedAt') or '') < cutoff:
+            continue
+        rd = execution.get('data', {}).get('resultData', {}).get('runData', {})
+        if not rd.get('Get Google OAuth Token'):
+            continue
+        body = (_node(rd, 'Parse Score') or {}).get('body', {})
+        token = _node(rd, 'Get Google OAuth Token') or {}
+        if token.get('access_token') or _upload_accepted(rd) is True or recovered_upload(body, orders):
+            continue
+        unresolved.add(body.get('lead_order_id') or str(execution.get('id')))
+    return sorted(unresolved)
 
 def _person_key(body):
     """Stable daily person key shared with live pacing: email, phone, then order ID."""
@@ -347,7 +408,8 @@ def _manual_upload_ledger(action_workflow):
         return {}
 
 
-def lead_breakdown(execs, start_d, end_d, action_execs=None, action_workflow=None):
+def lead_breakdown(execs, start_d, end_d, action_execs=None, action_workflow=None, recovery_orders=None):
+    recovery_orders = retry_orders() if recovery_orders is None else recovery_orders
     counts = {'send_to_sales': 0, 'review': 0, 'suppress': 0, 'total': 0,
               'good_uploaded': 0, 'good_rejected': 0}
     leads, covered_min = [], None
@@ -371,7 +433,7 @@ def lead_breakdown(execs, start_d, end_d, action_execs=None, action_workflow=Non
         # "uploaded" now means GOOGLE ACCEPTED it — rejects (fake/test click IDs) don't count.
         if dec == 'send_to_sales' and b.get('click_id'):
             person = (dd, _canonical_person(b, aliases))
-            accepted = _upload_accepted(rd)
+            accepted = True if recovered_upload(b, recovery_orders) else _upload_accepted(rd)
             if accepted is True:
                 upload_outcomes[person] = 'accepted'
             elif accepted is False and upload_outcomes.get(person) != 'accepted':
@@ -673,8 +735,8 @@ def expected_unique_click_groups(execs, day_d):
         groups.add((b.get('click_id_type') or 'gclid', b.get('click_id')))
     return len(groups)
 
-def run_health():
-    today = account_today(); y = today - timedelta(days=1)
+def run_health(report_date=None, preview=False):
+    y = report_date or account_today() - timedelta(days=1)
     alerts, info = [], []
     tok = None
     # 1. API version — the #1 systemic risk (direct test, authoritative)
@@ -693,7 +755,12 @@ def run_health():
     execs = n8n_execs()
     action_execs = n8n_execs(ACTION_WORKFLOW_ID)
     action_workflow = n8n_workflow(ACTION_WORKFLOW_ID)
-    counts, _, _ = lead_breakdown(execs, y, y, action_execs, action_workflow)
+    try:
+        recoveries = retry_orders()
+    except (OSError, ValueError) as ex:
+        recoveries = {}
+        alerts.append(f'🚨 Recovery ledger unavailable ({type(ex).__name__}); upload totals may be incomplete.')
+    counts, _, _ = lead_breakdown(execs, y, y, action_execs, action_workflow, recoveries)
     expected_auto = expected_good_with_click(execs, y)
     expected = max(expected_auto, counts.get('good_uploaded', 0) + counts.get('good_rejected', 0))
     unique_clicks = expected_unique_click_groups(execs, y)
@@ -709,36 +776,24 @@ def run_health():
     if counts.get('good_rejected'):
         alerts.append(f'🚨 {counts["good_rejected"]} good-lead upload(s) were rejected by Google Ads '
                       f'yesterday — check the Upload Click Conversion node response.')
-    if expected >= 3 and counts.get('good_uploaded', 0) < expected:
+    if expected and counts.get('good_uploaded', 0) < expected:
         alerts.append(f'🚨 Only {counts["good_uploaded"]} of {expected} upload-eligible good leads were '
                       f'accepted by Google Ads yesterday — check the Upload Click Conversion node.')
-    # 3. n8n's OWN credentials. Check #1 above tests ~/.secrets, which is a different
-    # OAuth grant from the one in the n8n container's env. On 12 Sep 2026 the n8n token
-    # died at ~11:30 UTC and this report said "All good" the next morning because its
-    # own token was fine and the day's 2 failed uploads sat under the expected>=3 gate.
-    # Reading the OAuth node's output in the last 24h catches it regardless of volume.
-    no_token = []
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
-    for e in execs:
-        if (e.get('startedAt') or '') < cutoff:
-            continue
-        rd = e.get('data', {}).get('resultData', {}).get('runData', {})
-        node = rd.get('Get Google OAuth Token')
-        if not node:
-            continue
-        out = ((node[0].get('data') or {}).get('main') or [[]])[0]
-        j = out[0].get('json', {}) if out else {}
-        if not j.get('access_token'):
-            ps = rd.get('Parse Score')
-            pj = (((ps[0].get('data') or {}).get('main') or [[]])[0] or [{}])[0].get('json', {}) if ps else {}
-            no_token.append(pj.get('body', {}).get('lead_order_id', e.get('startedAt', '?')[:16]))
-    if no_token:
-        alerts.append(f'🚨 n8n could not mint a Google Ads access token for {len(no_token)} upload(s) in the '
-                      f'last 24h — its refresh token is probably revoked (invalid_grant). Run '
-                      f'ops/reissue_google_ads_token.py, then conversion_worker.py --upload-order for: '
-                      + ', '.join(no_token[:6]) + (' …' if len(no_token) > 6 else ''))
+    # Probe the actual running grant: historical failures do not prove revocation.
+    token_health = current_n8n_token_health()
+    if token_health.get('ok'):
+        info.append('n8n Google Ads token: OK (live access-token check)')
+    elif token_health.get('error') == 'invalid_grant':
+        alerts.append('🚨 Live n8n Google Ads token check failed: invalid_grant. '
+                      'Reauthorise using ops/reissue_google_ads_token.py; pending uploads need recovery afterward.')
     else:
-        info.append('n8n Google Ads token: OK (every upload in the last 24h minted a token)')
+        error = html_lib.escape(str(token_health.get('error') or token_health.get('status') or 'unknown'))
+        alerts.append(f'🚨 Live n8n Google Ads token check failed ({error}); investigate before replacing credentials.')
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    no_token = unresolved_oauth_orders(execs, recoveries, cutoff)
+    if no_token:
+        alerts.append(f'🚨 {len(no_token)} upload(s) blocked by OAuth in the last 24h still lack a confirmed recovery: '
+                      + html_lib.escape(', '.join(no_token[:6])) + (' …' if len(no_token) > 6 else ''))
     # heartbeat info
     if spend is not None: info.append(f'Spend yesterday: {money(spend)}')
     info.append(f'Yesterday ({y}): {counts["total"]} scored — '
@@ -754,7 +809,10 @@ def run_health():
         inner += ('<div style="background:#fdecea;border:1px solid #f5c6cb;padding:12px;border-radius:6px;color:#7a1c12;">'
                   + '<br>'.join(alerts) + '</div>')
     inner += '<h3 style="color:#1A2B3D;">Status</h3>' + '<br>'.join(info)
-    send_email(f'[RCN health] {status} — {y}', shell(f'RCN health check — {status}', inner))
+    if preview:
+        print(json.dumps({'date': str(y), 'healthy': healthy, 'alerts': alerts, 'info': info}, ensure_ascii=False))
+    else:
+        send_email(f'[RCN health] {status} — {y}', shell(f'RCN health check — {status}', inner))
     print(f'[RCN health] {status} — {y}')
 
 def run_summary(label, start_d, end_d, recipients=REPORT_TO, example=False):
@@ -779,6 +837,8 @@ def main():
     today = account_today()
     if mode == '--health':
         run_health()
+    elif mode == '--health-preview':
+        run_health(date.fromisoformat(sys.argv[2]) if len(sys.argv) > 2 else None, preview=True)
     elif mode == '--daily':
         y = today - timedelta(days=1); run_summary('daily', y, y)
     elif mode == '--weekly':
@@ -791,7 +851,7 @@ def main():
         last_prev = first_this - timedelta(days=1)
         run_summary('monthly', last_prev.replace(day=1), last_prev, MONTHLY_REPORT_TO)
     else:
-        print('usage: rcn_report.py --health|--daily|--weekly|--weekly-example|--monthly'); sys.exit(1)
+        print('usage: rcn_report.py --health|--health-preview [YYYY-MM-DD]|--daily|--weekly|--weekly-example|--monthly'); sys.exit(1)
 
 if __name__ == '__main__':
     main()
