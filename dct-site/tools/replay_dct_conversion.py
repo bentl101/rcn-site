@@ -1,26 +1,31 @@
 #!/usr/bin/env python3
-"""Replay one DCT GCLID conversion from a recorded n8n execution.
+"""Recover one DCT conversion using the GCLID captured in an n8n execution.
 
 Run on the n8n VPS. The click identifier is read in memory from the historic
 execution and is never printed. The caller must supply the expected Order ID;
 the script refuses to upload if it does not match the execution exactly.
+Accepted original uploads retain their action even if they originally used a
+GBRAID. An action override is permitted only for failed originals. Validate-only
+is the default; live attempts produce private non-PII receipts, not attribution claims.
 """
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
+import os
 import pathlib
 import re
 import urllib.error
 import urllib.parse
 import urllib.request
+import tempfile
 
 
 N8N_BASE = "http://localhost:5678/api/v1"
 WORKFLOW_ID = "PmntlqBanV9ZMy3O"
 CUSTOMER_ID = "3639225242"
 LOGIN_CUSTOMER_ID = "3814278874"
-GCLID_ACTION = f"customers/{CUSTOMER_ID}/conversionActions/7762251563"
 
 
 def read_env(path: pathlib.Path) -> dict[str, str]:
@@ -77,6 +82,10 @@ def main() -> int:
     parser.add_argument("execution_id")
     parser.add_argument("--order-id", required=True)
     parser.add_argument("--execute", action="store_true", help="record the conversion; otherwise validate only")
+    parser.add_argument("--action-id", choices=('7748271517', '7748270854', '7762251563'),
+                        help="Override only a failed original upload; accepted uploads retain their original action")
+    parser.add_argument("--receipt-dir", type=pathlib.Path,
+                        default=pathlib.Path('/home/ben/infra/dct-conversions/receipts'))
     args = parser.parse_args()
 
     execution = get_execution(args.execution_id)
@@ -88,12 +97,23 @@ def main() -> int:
     if len(conversions) != 1:
         raise SystemExit("Refusing: execution does not contain exactly one conversion")
     conversion = dict(conversions[0])
-    if built.get("ads_route") != "gclid" or not conversion.get("gclid"):
-        raise SystemExit("Refusing: execution is not a GCLID conversion")
+    if built.get('is_qa') or built.get('ads_validate_only'):
+        raise SystemExit('Refusing: QA execution cannot be recovered as a real conversion')
+    gclid = str(built.get('gclid') or conversion.get('gclid') or '').strip()
+    if not gclid:
+        raise SystemExit("Refusing: execution has no captured GCLID")
     if str(conversion.get("orderId") or "") != args.order_id:
         raise SystemExit("Refusing: supplied Order ID does not match the recorded conversion")
 
-    conversion["conversionAction"] = GCLID_ACTION
+    original_action = conversion['conversionAction']
+    target_action = f'customers/{CUSTOMER_ID}/conversionActions/{args.action_id}' if args.action_id else original_action
+    original_result = first_json(run_data.get('Parse Ads Upload', []))
+    if original_result.get('ads_upload_accepted') and target_action != original_action:
+        raise SystemExit('Refusing: accepted upload must retain its action and Order ID to prevent double-counting')
+    conversion['conversionAction'] = target_action
+    conversion['gclid'] = gclid
+    conversion.pop('gbraid', None)
+    conversion.pop('wbraid', None)
     request_body = {
         "conversions": [conversion],
         "partialFailure": True,
@@ -122,18 +142,31 @@ def main() -> int:
 
     partial = payload.get("partialFailureError") or payload.get("partial_failure_error")
     results = payload.get("results") if isinstance(payload.get("results"), list) else []
-    accepted = status == 200 and not partial and (not args.execute or bool(results))
-    print(json.dumps({
+    accepted = status == 200 and not partial and not payload.get('error') and (not args.execute or any(results))
+    codes = google_error_codes(partial or payload.get('error') or payload)
+    duplicate = bool(set(codes) & {'CLICK_CONVERSION_ALREADY_EXISTS', 'CONVERSION_ALREADY_EXISTS', 'DUPLICATE_ORDER_ID'})
+    receipt = {
         "order_id": args.order_id,
-        "action_id": "7762251563",
+        "action_id": target_action.rsplit('/', 1)[-1],
+        "execution_id": args.execution_id,
+        "attempted_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "validate_only": not args.execute,
         "http_status": status,
         "accepted": accepted,
+        "already_exists": duplicate,
+        "job_id": payload.get('jobId'),
         "results_returned": len(results),
-        "google_error_codes": google_error_codes(partial or payload.get("error") or payload),
+        "google_error_codes": codes,
         "partial_failure": bool(partial),
-    }, separators=(",", ":")))
-    return 0 if accepted else 2
+        "attribution_status": "unverified",
+    }
+    if args.execute:
+        args.receipt_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        fd, path = tempfile.mkstemp(prefix=args.order_id + '-', suffix='.json', dir=args.receipt_dir)
+        with os.fdopen(fd, 'w') as handle:
+            json.dump(receipt, handle, indent=2)
+    print(json.dumps(receipt, separators=(",", ":")))
+    return 0 if accepted or duplicate else 2
 
 
 if __name__ == "__main__":

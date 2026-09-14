@@ -384,8 +384,10 @@ if (gbraid && wbraid) {
 }
 const braidType = gbraid ? 'gbraid' : (wbraid ? 'wbraid' : '');
 const braidValue = gbraid || wbraid;
-const route = braidValue ? 'braid' : 'gclid';
-const actionId = braidValue ? '7748270854' : '7762251563';
+// A captured GCLID gives us the click-level match and the durable queue route.
+// Use a privacy ID only when no GCLID survived attribution capture.
+const route = gclid ? 'gclid' : 'braid';
+const actionId = gclid ? '7762251563' : '7748270854';
 
 const parsed = new Date(String(lead.submitted_at || ''));
 const when = Number.isNaN(parsed.getTime()) ? new Date() : parsed;
@@ -404,8 +406,8 @@ const identifiers = [];
 if (eclRequested && lead.hashed_email) identifiers.push({hashedEmail: String(lead.hashed_email)});
 if (eclRequested && lead.hashed_phone) identifiers.push({hashedPhoneNumber: String(lead.hashed_phone)});
 const eclAllowed = eclRequested && identifiers.length > 0;
-if (gclid && (!braidType || (eclAllowed && braidType === 'gbraid'))) conversion.gclid = gclid;
-if (braidType) conversion[braidType] = braidValue;
+if (gclid) conversion.gclid = gclid;
+else if (braidType) conversion[braidType] = braidValue;
 if (eclAllowed) conversion.userIdentifiers = identifiers;
 
 return [{json: {
@@ -459,7 +461,7 @@ const rpc = response.error || null;
 const nodeError = response.errorMessage || response.message || null;
 const failure = partial || rpc || nodeError;
 const results = Array.isArray(response.results) ? response.results : [];
-const accepted = !failure && (request.ads_validate_only || results.length > 0);
+const accepted = !failure && (request.ads_validate_only || results.some(r => r && Object.keys(r).length > 0));
 const errorText = failure ? (typeof failure === 'string' ? failure : JSON.stringify(failure)) : '';
 return [{json:{
   ...request,
@@ -605,14 +607,15 @@ if (!found || !tokenOk || !['good','bad'].includes(requested)) {
   writeLead = true;
   const hasBraid = Boolean(String(row.gbraid || row.wbraid || '').trim()) || ['gbraid','wbraid'].includes(String(row.click_id_type || '').toLowerCase());
   const hasGclid = Boolean(String(row.gclid || '').trim()) || String(row.click_id_type || '').toLowerCase() === 'gclid';
-  adsAction = hasBraid ? 'customers/3639225242/conversionActions/7748270854' : (hasGclid ? 'customers/3639225242/conversionActions/7762251563' : '');
+  // Retractions must follow the action actually used, including pre-fix braid uploads.
+  adsAction = String(row.ads_conversion_action || (hasGclid ? 'customers/3639225242/conversionActions/7762251563' : (hasBraid ? 'customers/3639225242/conversionActions/7748270854' : '')));
   const canRetract = Boolean(adsAction);
   if (canRetract) {
     const raw = String(row.submitted_at || row.ads_uploaded_at_utc || '');
     const submitted = new Date(raw.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? '' : 'Z'));
     const earliest = Number.isNaN(submitted.getTime()) ? now.getTime() : submitted.getTime() + (24 * 60 + 30) * 60000;
     due = new Date(Math.max(now.getTime(), earliest)).toISOString();
-    disableDataManager = hasGclid && !hasBraid;
+    disableDataManager = adsAction === 'customers/3639225242/conversionActions/7762251563';
     nextState = 'bad_retraction_queued'; result = 'retraction_queued'; detail = 'Human marked bad; Data Manager retry stopped where present; retraction due ' + due + '.';
   } else {
     nextState = 'bad_rejected'; result = 'rejected'; detail = 'Human marked bad; no accepted DCT Ads conversion is available to retract.';
@@ -641,8 +644,8 @@ const found = String(row.lead_order_id || '') === String(event.lead_order_id || 
 const state = String(row.manual_action || '');
 const hasBraid = Boolean(String(row.gbraid || row.wbraid || '').trim()) || ['gbraid','wbraid'].includes(String(row.click_id_type || '').toLowerCase());
 const hasGclid = Boolean(String(row.gclid || '').trim()) || String(row.click_id_type || '').toLowerCase() === 'gclid';
-const derivedAction = hasBraid ? 'customers/3639225242/conversionActions/7748270854' : (hasGclid ? 'customers/3639225242/conversionActions/7762251563' : '');
-const action = String(event.ads_conversion_action || derivedAction || row.ads_conversion_action || '');
+const derivedAction = hasGclid ? 'customers/3639225242/conversionActions/7762251563' : (hasBraid ? 'customers/3639225242/conversionActions/7748270854' : '');
+const action = String(event.ads_conversion_action || row.ads_conversion_action || derivedAction || '');
 const validAction = /^customers\/3639225242\/conversionActions\/(7762251563|7748270854)$/.test(action);
 const raw = String(row.submitted_at || row.ads_uploaded_at_utc || '');
 const submitted = new Date(raw.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? '' : 'Z'));
