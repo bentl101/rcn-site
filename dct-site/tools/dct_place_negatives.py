@@ -44,6 +44,15 @@ Also fed from here since 12 Sep 2026:
   companies and Europe-direct competitors seen in the search terms.
 * Intent exclusions (``near me``, ``day trip``, ``tour bus``...) go to
   ``DCT | Global Search Exclusions``.
+
+On competitor brands and Smart Bidding (Ben, 15 Sep 2026): a query naming a
+rival Europe-direct operator - ``cie tours canada``, ``trafalgar
+reservations``, ``ef tours`` - is still a coach-tour buyer. The brand is the
+only thing "wrong" with it, and DCT can often sell the same itinerary. Under
+Smart Bidding those queries are a signal source, not waste: the bidder will
+down-weight the ones that never convert. So only add a brand here when the
+PRODUCT is wrong (day-tour marketplaces, bus ticketing, domestic day-trip
+companies), not merely because the brand is not ours.
 """
 from __future__ import annotations
 
@@ -249,15 +258,22 @@ COLLISION_EXCLUDED = {
 # day-trip and coach companies, plus operators selling Europe direct that DCT
 # does not resell. Add to this as new ones show up.
 COMPETITOR_OPERATORS = [
-    "great canadian", "front line", "collette", "approach tours",
-    "comfort tours", "go ahead", "exoticca", "rabbies", "caa", "taipan",
+    "great canadian", "front line", "comfort tours", "caa", "taipan",
     "protours", "fehrway", "wnax", "concorde", "concord tours", "maple leaf",
     "diamond tours", "collins tours", "atlantic tours", "jump in travel",
     "tours of distinction", "shoptravel", "shorttrips", "salem",
     # 12 Sep (second report): bus-ticketing and more domestic operators
     "flixbus", "senior discovery", "dreamtour", "sunrise tours",
     "west world", "matrix tours", "stewart travel",
+    # 15 Sep: day-tour marketplace, not a coach-tour buyer. Other operator
+    # brands seen that day (CIE, EF, Back-Roads...) were deliberately NOT
+    # added - see the note on Smart Bidding at the top of this file.
+    "viator",
 ]
+# Removed 15 Sep 2026 at Ben's call - Europe-direct operators whose
+# customers want the product DCT sells: collette, go ahead, exoticca,
+# rabbies, approach tours. Left to Smart Bidding to weigh.
+COMPETITOR_REMOVED = ["collette", "go ahead", "exoticca", "rabbies", "approach tours"]
 
 # --- intent exclusions (search-exclusion list) -------------------------------
 # Query shapes that are never a coach-tour buyer. ``tour bus`` as a phrase
