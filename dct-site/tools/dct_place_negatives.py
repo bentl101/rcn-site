@@ -70,6 +70,7 @@ CANADA_PHRASES = [
     "canada rail", "canada train", "cross canada", "across canada",
     "eastern canada", "western canada", "atlantic canada",
     "canadian rockies", "canadian rockies tour", "canadian maritimes",
+    "within canada", "east coast",  # 18 Sep
 ]
 
 # Destination provinces, regions and landmarks. Single words are BROAD.
@@ -120,7 +121,7 @@ CANADA_CITIES = [
     "saanich", "abbotsford", "coquitlam", "brantford", "sarnia", "belleville",
     "orillia", "timmins", "welland", "whitehorse", "yellowknife", "chilliwack",
     "pickering", "lunenburg", "antigonish", "kamloops", "nanaimo",
-    "lethbridge", "sudbury", "oakville", "burlington",
+    "lethbridge", "sudbury", "oakville", "burlington", "alliston",
     # Multi-word (phrase)
     "st johns", "saint john", "thunder bay", "red deer", "medicine hat",
     "prince george", "sault ste marie", "st catharines", "north bay",
@@ -269,6 +270,10 @@ COMPETITOR_OPERATORS = [
     # brands seen that day (CIE, EF, Back-Roads...) were deliberately NOT
     # added - see the note on Smart Bidding at the top of this file.
     "viator",
+    # 18 Sep: wrong product. Ontario domestic day-trip operators and a
+    # river-cruise line surfaced by AI Max expansion.
+    "omega tours", "maple holidays", "time of your life", "hanover holiday",
+    "avalon waterways",
 ]
 # Removed 15 Sep 2026 at Ben's call - Europe-direct operators whose
 # customers want the product DCT sells: collette, go ahead, exoticca,
@@ -288,6 +293,12 @@ INTENT_EXCLUSIONS = [
     # bus-ticket buyers (FlixBus/Greyhound intent) and navigational queries
     # for the operator's own site ("trafalgar com", "globus com").
     "ticket", "tickets", "website", "login", "com",
+    # 18 Sep: wrong product, from AI Max expansion
+    "hop on hop off", "hop on", "cruise", "cruises", "kids", "children",
+    "local", "shorts",  # "short" does not match the plural
+    # 18 Sep: informational queries AI Max reaches into. Zero clicks yet.
+    "worth it", "best way", "best time", "best places", "bucket list",
+    "top 10", "what is", "when is", "how to",
 ]
 
 
