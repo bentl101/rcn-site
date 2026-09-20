@@ -274,6 +274,8 @@ COMPETITOR_OPERATORS = [
     # river-cruise line surfaced by AI Max expansion.
     "omega tours", "maple holidays", "time of your life", "hanover holiday",
     "avalon waterways",
+    # 20 Sep: Caravan Tours sells Latin America and US/Canada parks only
+    "caravan tours",
 ]
 # Removed 15 Sep 2026 at Ben's call - Europe-direct operators whose
 # customers want the product DCT sells: collette, go ahead, exoticca,
@@ -298,7 +300,7 @@ INTENT_EXCLUSIONS = [
     "local", "shorts",  # "short" does not match the plural
     # 18 Sep: informational queries AI Max reaches into. Zero clicks yet.
     "worth it", "best way", "best time", "best places", "bucket list",
-    "top 10", "what is", "when is", "how to",
+    "top 10", "what is", "when is", "how to", "how much",
 ]
 
 
