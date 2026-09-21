@@ -8,10 +8,13 @@ import time
 from typing import Any
 
 import google_ads_offline as ads
+import apply_google_ads_bid_cap as bid_cap
 
 CID = "3639225242"
 CAMPAIGN = "DCT | Search | Canada | Operators | 2026"
+# Keep the historical live resource name; the amount below is authoritative.
 BUDGET = "DCT | Search | Canada | 150 CAD per day"
+DAILY_BUDGET_MICROS = 70_000_000
 BASE = "https://book.discountcoachtours.ca"
 
 # Account-level negative lists, attached to the campaign rather than held as
@@ -354,8 +357,8 @@ def ensure_budget(env: dict[str, str], token: str) -> str:
     )
     if rows:
         item = rows[0]["campaignBudget"]
-        if int(item.get("amountMicros", 0)) != 150_000_000:
-            raise RuntimeError("Existing DCT budget does not equal CAD 150/day")
+        if int(item.get("amountMicros", 0)) != DAILY_BUDGET_MICROS:
+            raise RuntimeError("Existing DCT budget does not equal CAD 70/day")
         return item["resourceName"]
     payload = mutate(
         env,
@@ -363,7 +366,7 @@ def ensure_budget(env: dict[str, str], token: str) -> str:
         "campaignBudgets",
         [{"create": {
             "name": BUDGET,
-            "amountMicros": "150000000",
+            "amountMicros": str(DAILY_BUDGET_MICROS),
             "deliveryMethod": "STANDARD",
             "explicitlyShared": False,
         }}],
@@ -371,11 +374,14 @@ def ensure_budget(env: dict[str, str], token: str) -> str:
     return payload["results"][0]["resourceName"]
 
 
-def ensure_campaign(env: dict[str, str], token: str, budget: str) -> str:
+def ensure_campaign(
+    env: dict[str, str], token: str, budget: str, strategy: str
+) -> str:
     rows = search(
         env,
         token,
-        "SELECT campaign.id, campaign.name, campaign.resource_name, campaign.status "
+        "SELECT campaign.id, campaign.name, campaign.resource_name, campaign.status, "
+        "campaign.bidding_strategy "
         f"FROM campaign WHERE campaign.name = '{CAMPAIGN}'",
     )
     if rows:
@@ -384,6 +390,14 @@ def ensure_campaign(env: dict[str, str], token: str, budget: str) -> str:
             raise RuntimeError(
                 f"Refusing to alter same-named campaign in {item.get('status')} state"
             )
+        if item.get("biddingStrategy") != strategy:
+            mutate(env, token, "campaigns", [{
+                "update": {
+                    "resourceName": item["resourceName"],
+                    "biddingStrategy": strategy,
+                },
+                "updateMask": "biddingStrategy",
+            }])
         return item["resourceName"]
     payload = mutate(
         env,
@@ -405,7 +419,7 @@ def ensure_campaign(env: dict[str, str], token: str, budget: str) -> str:
                 "positiveGeoTargetType": "PRESENCE",
                 "negativeGeoTargetType": "PRESENCE",
             },
-            "targetSpend": {"cpcBidCeilingMicros": "5000000"},
+            "biddingStrategy": strategy,
         }}],
     )
     return payload["results"][0]["resourceName"]
@@ -679,14 +693,14 @@ def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
         env,
         token,
         "SELECT campaign.id, campaign.name, campaign.status, "
-        "campaign.advertising_channel_type, campaign.bidding_strategy_type, "
+        "campaign.advertising_channel_type, campaign.bidding_strategy, "
+        "campaign.bidding_strategy_type, "
         "campaign.network_settings.target_google_search, "
         "campaign.network_settings.target_search_network, "
         "campaign.network_settings.target_content_network, "
         "campaign.network_settings.target_partner_search_network, "
         "campaign.geo_target_type_setting.positive_geo_target_type, "
         "campaign.geo_target_type_setting.negative_geo_target_type, "
-        "campaign.target_spend.cpc_bid_ceiling_micros, "
         "campaign.primary_status, "
         "campaign_budget.amount_micros "
         f"FROM campaign WHERE campaign.name = '{CAMPAIGN}'",
@@ -738,6 +752,7 @@ def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
     )
     campaign = campaign_rows[0].get("campaign", {}) if campaign_rows else {}
     budget = campaign_rows[0].get("campaignBudget", {}) if campaign_rows else {}
+    bid_state = bid_cap.snapshot(env, token)
     criteria = [row.get("campaignCriterion", {}) for row in criterion_rows]
     serving_group_names = {
         row["adGroup"]["name"]
@@ -747,6 +762,8 @@ def snapshot(env: dict[str, str], token: str) -> dict[str, Any]:
     return {
         "campaign": campaign,
         "budget_cad_per_day": int(budget.get("amountMicros", "0")) / 1_000_000,
+        "portfolio_bid_strategy": bid_state["portfolio_strategy"],
+        "bid_guardrail_ok": bid_state["ok"],
         # Totals count every row the API returns, including PAUSED groups and
         # REMOVED criteria. The "serving_" figures are what can actually run,
         # and are the numbers to quote. The two diverged after the 10 September
@@ -819,9 +836,11 @@ def plan() -> dict[str, Any]:
         "customer_id": CID,
         "campaign": CAMPAIGN,
         "campaign_status": "PAUSED",
-        "budget_cad_per_day": 150,
-        "bidding": "MAXIMIZE_CLICKS",
-        "max_cpc_cad": 5,
+        "budget_cad_per_day": DAILY_BUDGET_MICROS / 1_000_000,
+        "bidding": "MAXIMIZE_CONVERSIONS_PORTFOLIO",
+        "target_cpa_cad": bid_cap.TARGET_CPA_MICROS / 1_000_000,
+        "max_cpc_cad": bid_cap.MAX_CPC_MICROS / 1_000_000,
+        "portfolio_strategy": bid_cap.STRATEGY_NAME,
         "targeting": "Canada presence, English",
         "search_partners": False,
         "display_network": False,
@@ -858,7 +877,8 @@ def main() -> None:
         print(json.dumps(snapshot(env, token), indent=2))
         return
     budget = ensure_budget(env, token)
-    campaign = ensure_campaign(env, token, budget)
+    strategy = bid_cap.ensure_strategy(env, token)
+    campaign = ensure_campaign(env, token, budget, strategy)
     changes = {
         "campaign_criteria_created": ensure_campaign_criteria(env, token, campaign),
         "negative_shared_sets_attached": ensure_shared_sets(env, token, campaign),

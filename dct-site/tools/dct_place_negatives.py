@@ -276,6 +276,8 @@ COMPETITOR_OPERATORS = [
     "avalon waterways",
     # 20 Sep: Caravan Tours sells Latin America and US/Canada parks only
     "caravan tours",
+    # 21 Sep: travel-agent network/navigation, not a coach-tour operator query
+    "inteletravel",
 ]
 # Removed 15 Sep 2026 at Ben's call - Europe-direct operators whose
 # customers want the product DCT sells: collette, go ahead, exoticca,
