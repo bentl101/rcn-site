@@ -1,0 +1,575 @@
+{
+  "public": [
+    {
+      "site": "rcn",
+      "path": "amawaterways-river-cruise.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "00da6bf3984d368e5d2bfc20503ff1eec53cf1de4e577809bb9cacb2fd819249",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "assets/css/style.css",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c80ddb8ea1f55eb832b02ec3291b14574f8f6b7a623aeb1b9a9290c476cd2825",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "assets/js/reviews-carousel.js",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c81ce7a55ffcec37270ec2ebbeaed4a4cd824f0fa83241b1ee3a883fef85ae38",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "avalon-waterways.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "ee98dc623a278fe25d8edc838984cf7d79c91f8168555aa9e907cd1780386c30",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "emerald-river-cruise.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "25e41980449dc2d5e3f09b4dd6444d178c3a027f0ab3604728b1b2aa786bf89a",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/1a-rivers-hp-grandeuro_478x345_mar_tcm21-61056.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "fdc4342dad9088473b6cfaff347722d5e0fbdc2ab6fb7268e1d946606bca22fd",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/95-750.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "ec2b3e50e557bafa98c405c3407abf55ee8615ca3146636d4ea2d7605ce5581e",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/amawaterways-logo.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "4336015294a07092e446360b052e00dd75a0797704bd391dbb7a59bca58656ed",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/ataglance_amalea_pool.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "649abc9501033e26390ed316ec2f6cb2030c16a6a7d6633483e4590d79801545",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/avalon_waterways_logo_logotype-750.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "ec8189f9ba067315ae6b5ee8f99b8e2fab4be21b185eefdd0f24dfccd7b13936",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/avignon-image_1a-min-1000.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "f220ffe7a199cda00ff6e934c9751505ec649ab1ca2a6522a55ebb0656402a39",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/budapest_bridge_760x590.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "fe2f6f01c71307dbd8805abe58ce1de4e3bc14a81223d1e19b088ca1a7dc8df0",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/couple-viewing-open-air-balcony2-2500.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "eea76c4e4f465f89d92cbc4a8f703e598c962089cbce0977b69fbfec9e4fd5c8",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/cruise-min.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "a29893eaa4245aa748cc47a0edc9a5627a2d6d84619b25e1729204844c0fa64d",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/danube.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c17fccbd6867add4370c175a37f04208f51d9d9c408377d9bcd0dab06b27d281",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/ew-germany-bamberg11-1000.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "09a4a21964797839353216a5a8b2e87800ac482762d469999c484d97efd19840",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/ew-germany-koblenz1-1000.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "e255f91d80870b3ec97a64e68d5893da97362589ab1ffea943b688106163fc95",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/ew-ships-sun7.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "af8cf95b93775f261bbf4b27a5f3dbd414e99ef8cc7848f508d8f6902916f86b",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/halong-bay_vietnam-2.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "db728bc52ca35cd31290d460000b96458f138baad476527abd0224bd359e04a9",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/homepage_itinerary_romanticdanube.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "716cd6171a2cb893d05250b3b934598af7f4c7c7391abc963173fb98bf761f5f",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/logo-three.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c166a0fb652f6b5b7d8a3bf5ebae1a16b64edddaa59363ee78c20970666f65be",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/longitudinal-world-cruise-v2-iii_478x345_tcm40-173201.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "413d202bc101dcfafa6d9dcb81713af3bdab23fc2bea4b93abdbd03c6416ac23",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/pexels-michael-block-3225528--1--min-1000.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "9b0e108ccee262507f8a7961a9e6cc6fc67c2a15ca52e4467517608ede0d0f6b",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/prima_exterior_passau01.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "763440d07c15b8b04913d5b61f4e029fec29efd31e6c5a7f3b9d640152c926cb",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/sc-suite-balcony-amber1-rqt6lt-1500.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "3b8d694d9f6972d273f1f80d3ebe38512cdf8dc10bc2f7d02e8d1a60648749c6",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/scenic-luxury-cruises-logo-750.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "07a5657684a4977efef76739fb3ca6658f82baf5f64a90efd234c0b71b47c43e",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/seine.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "eab294c16751063c490a3c6f2c8dcd63b7546a323fa448338f637e49475417f2",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/viking-hero.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "91ca67222f9c84d21b11caa0bd80bbfbe2612ef630a640da7e39a93e26433057",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "images/viking-logo-vertical.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "30115226c91e6d50dee9d336b4ab1982d507f377cad76acd9cfe357fc3f9981e",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "index.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "25042119b2159b441ac643ec30a9e1619ef9c0d3021320e6fbaced1a2edace22",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "scenic-river-cruise.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "cdddecd6a013ab8c01b25c2a799f3df57f0013880c376987fa9debcfe2fa9349",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "thank-you.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "9ece8eda1215aaa6d3265f508ee7602eada7af14bfdb19066be5ad358fecf5e5",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "viking-river-cruise.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "f18c7b13b100079351b0c14d0ac72aa8e0d18f06ae238c7168f492da9a9697ac",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "404.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "7ffdf858c2e49225f3563462de2d091e82905d5266b618b6ca6042f7a59fe8c9",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/css/site.css",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "a284251d6e0b4cda3e24dc8ae0b68be6e1744395da7d6aa45b2020edf579f114",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/cosmos-highlands.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "3f6413379348bcea46305ec7259d382ab7e891af9fb71965af884ee9f8a2d55c",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/cosmos-highlands.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "4479d14cd2006133ed39dbd78676c017e9b2b6806513605b6647d26f7a2c3592",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-horizontal.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c1f0829553e176d8e92924479020598ddb23b488ab1241b8d3e52b7b94245bb7",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-horizontal.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "770cbe6b4063f6ee05be84fb4a3ae2268fedd1b65822cf695c9212b32a38a2da",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-mark.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "01621f3d16f8efc6fe55f6339a4d11f6ab13b880ddf5a3f5972f206de1de7f64",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-mark.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "71569c0433596a11b4e11192f28fc4b98c18d9d6808d1838116a9db9b831113d",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-mobile.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "e994516e75d96b861881944905dbfe79a0231fa4b1f8d119be6acad4aa5f8328",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-mobile.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "310ed84ae042c173cecf93f310e1c0720793b74f73cbd2002879544cd15cb004",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-original.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "554fba41a8934e9fd239fc9b2853b153170d410375286f8c7632bd227d6124d1",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-square.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "af0b19265908c3be7500f35b7f54a552bb49337c00cdd7b599d7308c5fedc921",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/dct-logo-square.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "d47ab3d8263e3f47c93870b04e52305677b5ebdd1eae011a63eefda670050f91",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/globus-alps.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "4ba3a93889dc63b0d87eeae3500c23af65dd2cc09b6c66a2a7a4ff39d8c17304",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/globus-alps.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "b8d9446905157150942d027466e723da582d20f446a2ad6991c63be27a63cf6c",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/hero-coach-rockies.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "ae26415905d6c8229488525f2209c3df4f04cbf043c0290a493d89512995e319",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/hero-coach-rockies.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "7ec38a04470876622cdf27342f47ddad8195b39bfd7e647f99bc5d082f2e68d8",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/insight-lake-como.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "f7bb6ad65f2b1ce9a69fd169a00c43aca3ec9c9f6e8516cebc41ee5e41def8b3",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/insight-lake-como.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "99f4cb7de04b70bcc31d760a7b391898751378f91cc77c82f1c4abaaf6eedba1",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/operator-cosmos.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "d0b6a25907a2e47f0c392f17c1f7c602b2f9221923ad3a5d2420ceeb8d72551f",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/operator-globus.jpg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "14a71f61828a8a69fceac420e6459c10b844e2a9a42c5a4b8c4a996beed5f6a9",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/operator-insight.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "ea1df5b929e9518841d99f2ea6b4371e2f6139da99e02a92ac80cd00a5be1a54",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/operator-trafalgar.svg",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "e83aa02fa1e0fa64b14c36951de451487a089508f98ce2f2dc2813c53c1768c9",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/trafalgar-guests.png",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c9859b73b710687fa3324c07c5028b8df705df0bca6b0f4a16b386ad9dbd7be9",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/images/trafalgar-guests.webp",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "7203b264dec190eb5aa50bb28a56e21ffe15d0a338ea1ff1048db2cb94bf6329",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "assets/js/site.js",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "1ae1ff61c2759988189c99ea6ce88d8b308d82c75dee74ca53e314c6711e2fe6",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "cosmos-tours.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "0494a657a9ed88904f77c8c04ab028fc13dd09390721a01a7e6fed87d002e77a",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "globus-journeys.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "6f9a1c6b3ce39fc1aa0c0125411e0ffa299a5e2e57415dfcd0709326ebc63c4a",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "index.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "c74a3226cf990e0af175122bc3911fd20a30ed927e446aa222ed391319cded6f",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "insight-vacations.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "1c117267cd46c2594d98c548649c0a7f314c95266e4b74ca529f993b130181b3",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "privacy.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "51d23193c9794740487e6eab2cdd1aab6d8313d671181e10cd931c3e47a304f5",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "thank-you.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "5ed1fd5ff9c215a92dd85bfe2c242a84b19b63e130e5c5c5c865d41ac9125e6f",
+      "ok": true
+    },
+    {
+      "site": "dct",
+      "path": "trafalgar-tours.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "2a8af9623fcf8ebf4281539e3a2a8eb0d2a7c34dd1d6a30d16b53975fd61a5a8",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "assets/js/phone-validate.js",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "e2f13f43ee56e10ca344a21309ca06caead17d56a4dd27c468c9d455a037f9f6",
+      "ok": true
+    },
+    {
+      "site": "rcn",
+      "path": "cruise_competitor_offer_briefing.html",
+      "status": "200",
+      "matches_source": true,
+      "sha256": "03573fbc1a4f5b1a5c7023b6af72ff8da474848937210c126a27510e8f456e43",
+      "ok": true
+    }
+  ],
+  "protected": [
+    {
+      "path": "leads.csv",
+      "status": "403",
+      "expected": "403"
+    },
+    {
+      "path": "leads-pre-orderid.csv",
+      "status": "403",
+      "expected": "403"
+    },
+    {
+      "path": "leads-pre-valuetrack.csv",
+      "status": "403",
+      "expected": "403"
+    },
+    {
+      "path": "rcn-secrets.php",
+      "status": "403",
+      "expected": "403"
+    },
+    {
+      "path": "mockup/index.html",
+      "status": "404",
+      "expected": "404"
+    }
+  ]
+}
