@@ -32,3 +32,9 @@ vendor/
 # Python tooling
 __pycache__/
 *.py[cod]
+
+# Historical mixed-site instructions and obsolete RCN duplicate
+.project-history/
+/rcn-site/*
+!/rcn-site/AGENTS.md
+!/rcn-site/CLAUDE.md

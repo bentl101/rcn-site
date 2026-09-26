@@ -79,69 +79,62 @@ $utm_term           = clean_text($_POST['utm_term']          ?? '');
 $utm_content        = clean_text($_POST['utm_content']       ?? '');
 $click_id           = clean_text($_POST['click_id']          ?? '');
 $click_id_type      = clean_text($_POST['click_id_type']     ?? '');
-$device_type        = clean_text($_POST['device_type']       ?? '');
-$browser_language   = clean_text($_POST['browser_language']  ?? '');
-$user_agent         = $_SERVER['HTTP_USER_AGENT']            ?? '';
-$landing_page       = filter_var(trim($_POST['landing_page'] ?? ''), FILTER_SANITIZE_URL);
-$referrer           = filter_var(trim($_POST['referrer']     ?? ''), FILTER_SANITIZE_URL);
-// New ValueTrack params
 $utm_id             = clean_text($_POST['utm_id']            ?? '');
 $matchtype          = clean_text($_POST['matchtype']         ?? '');
-$gad_device         = clean_text($_POST['device']            ?? '');  // Google's m/t/c (not to be confused with device_type)
 $network            = clean_text($_POST['network']           ?? '');
 $adgroupid          = clean_text($_POST['adgroupid']         ?? '');
 $targetid           = clean_text($_POST['targetid']          ?? '');
 $loc_physical       = clean_text($_POST['loc_physical']      ?? '');
 $loc_interest       = clean_text($_POST['loc_interest']      ?? '');
+$gad_device         = clean_text($_POST['device']            ?? '');  // Google {device}: m/t/c
+$device_type        = clean_text($_POST['device_type']       ?? '');  // UA-derived
+$browser_language   = clean_text($_POST['browser_language']  ?? '');
+$user_agent         = $_SERVER['HTTP_USER_AGENT']            ?? '';
+$landing_page       = filter_var(trim($_POST['landing_page'] ?? ''), FILTER_SANITIZE_URL);
+$referrer           = filter_var(trim($_POST['referrer']     ?? ''), FILTER_SANITIZE_URL);
 $time_on_page       = (int)($_POST['time_on_page']           ?? 0);
-$honeypot_website   = trim($_POST['website']                 ?? '');
-$honeypot_reference = trim($_POST['contact_reference']       ?? '');
-$honeypot_sources   = [];
-if ($honeypot_website !== '')   $honeypot_sources[] = 'website';
-if ($honeypot_reference !== '') $honeypot_sources[] = 'contact_reference';
-$honeypot_filled    = count($honeypot_sources) > 0;  // signal, not a PHP rejection gate
-$honeypot_source    = implode(',', $honeypot_sources);
+$honeypot           = trim($_POST['website']                 ?? '');  // signal, not a gate
 $lead_order_id      = clean_text($_POST['lead_order_id']     ?? '');
 if (empty($lead_order_id)) {
     $lead_order_id = 'RCN-' . gmdate('Ymd-His') . '-' . bin2hex(random_bytes(4));
 }
 $submitted_at       = gmdate('Y-m-d H:i:s');
+$ip_address         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-// Server-side referrer fallback: if the JS attribution cookie/sessionStorage was
-// wiped mid-journey (e.g. Facebook in-app browser), try to recover click_id,
-// UTMs, and ValueTrack params from the referrer URL's query string.
-if ($click_id === '' && $referrer !== '' && strpos($referrer, '?') !== false) {
-    $ref_query = parse_url($referrer, PHP_URL_QUERY) ?? '';
-    if ($ref_query) {
-        $ref_params = [];
-        parse_str($ref_query, $ref_params);
+// ── Referrer fallback (server-side backstop) ─────────────────────────────────
+// In-app browsers (e.g. Facebook) wipe sessionStorage across navigation, so a
+// real Google Ads click can arrive with an empty click_id even though the
+// original landing URL — gclid, UTMs, network, gad_source — survives in the
+// referrer. Recover from it so the conversion still uploads and the subject tag
+// resolves. Runs before the CSV write so recovered values are logged too.
+if ($click_id === '' && $referrer !== '') {
+    $rq = parse_url($referrer, PHP_URL_QUERY);
+    if ($rq) {
+        parse_str($rq, $rp);
         foreach (['gclid','gbraid','wbraid','fbclid','msclkid','ttclid'] as $ck) {
-            if (!empty($ref_params[$ck])) {
-                $click_id      = clean_text($ref_params[$ck]);
-                $click_id_type = $ck;
-                break;
-            }
+            if (!empty($rp[$ck])) { $click_id = clean_text($rp[$ck]); $click_id_type = $ck; break; }
         }
-        if ($click_id !== '') {
-            // Backfill empty attribution fields from the referrer
-            foreach (['utm_source','utm_medium','utm_campaign','utm_term','utm_content',
-                      'utm_id','matchtype','network','adgroupid','targetid',
-                      'loc_physical','loc_interest'] as $k) {
-                if (isset($ref_params[$k]) && $$k === '') {
-                    $$k = clean_text($ref_params[$k]);
-                }
-            }
-            if (!empty($ref_params['device']) && $gad_device === '') {
-                $gad_device = clean_text($ref_params['device']);
-            }
-            // The referrer IS the real landing page when storage was wiped
-            if ($landing_page === '' || strpos($landing_page, '?') === false) {
-                $landing_page = filter_var($referrer, FILTER_SANITIZE_URL);
-            }
+        $fallback_map = [
+            'utm_source'   => 'utm_source',   'utm_medium'  => 'utm_medium',
+            'utm_campaign' => 'utm_campaign', 'utm_term'    => 'utm_term',
+            'utm_content'  => 'utm_content',  'utm_id'      => 'utm_id',
+            'matchtype'    => 'matchtype',    'network'     => 'network',
+            'adgroupid'    => 'adgroupid',    'targetid'    => 'targetid',
+            'loc_physical' => 'loc_physical', 'loc_interest'=> 'loc_interest',
+            'device'       => 'gad_device',
+        ];
+        foreach ($fallback_map as $param => $var) {
+            if ($$var === '' && !empty($rp[$param])) { $$var = clean_text($rp[$param]); }
+        }
+        // The referrer IS the real landing page when storage was wiped; prefer it
+        // if the captured landing_page carries no tracking (so n8n reads gad_source).
+        if ($referrer !== '' && strpos((string)$landing_page, 'gad_source') === false
+            && strpos((string)$landing_page, 'gclid') === false
+            && (isset($rp['gad_source']) || $click_id !== '')) {
+            $landing_page = $referrer;
         }
     }
 }
-$ip_address         = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 // Enhanced-conversion hashes (computed once, used by n8n upload + sheet writes)
 $hashed_email       = hash_for_ads(normalise_email($email));
@@ -169,17 +162,19 @@ $csv_header = [
     'additional_info','page_source','utm_source','utm_medium','utm_campaign',
     'utm_term','utm_content','click_id','click_id_type','device_type',
     'landing_page','referrer','time_on_page','honeypot_filled','ip_address',
-    'user_agent','utm_id','matchtype','network','adgroupid','targetid',
-    'loc_physical','loc_interest','gad_device','n8n_status','n8n_error',
+    'user_agent',
+    'utm_id','matchtype','network','adgroupid','targetid','loc_physical','loc_interest','gad_device',
+    'n8n_status','n8n_error',
 ];
 $csv_row = [
     $submitted_at, $lead_order_id, $first_name, $last_name, $email, $phone,
     $destination, $travel_date, $duration, $budget, $guests, $operator,
     $additional_info, $page_source, $utm_source, $utm_medium, $utm_campaign,
     $utm_term, $utm_content, $click_id, $click_id_type, $device_type,
-    $landing_page, $referrer, $time_on_page, ($honeypot_filled ? 1 : 0), $ip_address,
-    $user_agent, $utm_id, $matchtype, $network, $adgroupid, $targetid,
-    $loc_physical, $loc_interest, $gad_device, 'received', '',
+    $landing_page, $referrer, $time_on_page, ($honeypot !== '' ? 1 : 0), $ip_address,
+    $user_agent,
+    $utm_id, $matchtype, $network, $adgroupid, $targetid, $loc_physical, $loc_interest, $gad_device,
+    'received', '',
 ];
 // Append under an exclusive lock. 'c' creates the file if missing without
 // truncating, with the pointer at the start so we can detect an empty file
@@ -220,17 +215,6 @@ $lead_payload = json_encode([
     'utm_content'     => $utm_content,
     'click_id'        => $click_id,
     'click_id_type'   => $click_id_type,
-    'device_type'     => $device_type,
-    'browser_language'=> $browser_language,
-    'user_agent'      => $user_agent,
-    'landing_page'    => $landing_page,
-    'referrer'        => $referrer,
-    'time_on_page'    => $time_on_page,
-    'honeypot_filled' => $honeypot_filled,
-    'honeypot_source' => $honeypot_source,
-    'submitted_at'    => $submitted_at,
-    'ip_address'      => $ip_address,
-    // ValueTrack / expanded attribution
     'utm_id'          => $utm_id,
     'matchtype'       => $matchtype,
     'network'         => $network,
@@ -239,6 +223,15 @@ $lead_payload = json_encode([
     'loc_physical'    => $loc_physical,
     'loc_interest'    => $loc_interest,
     'gad_device'      => $gad_device,
+    'device_type'     => $device_type,
+    'browser_language'=> $browser_language,
+    'user_agent'      => $user_agent,
+    'landing_page'    => $landing_page,
+    'referrer'        => $referrer,
+    'time_on_page'    => $time_on_page,
+    'honeypot_filled' => ($honeypot !== ''),
+    'submitted_at'    => $submitted_at,
+    'ip_address'      => $ip_address,
     // Enhanced conversions (SHA-256 hex, lowercase, normalised)
     'hashed_email'    => $hashed_email,
     'hashed_phone'    => $hashed_phone,
@@ -330,9 +323,17 @@ if ($utm_campaign) $body .= "UTM Campaign:   {$utm_campaign}\n";
 if ($utm_term)     $body .= "UTM Term:       {$utm_term}\n";
 if ($utm_content)  $body .= "UTM Content:    {$utm_content}\n";
 if ($click_id)     $body .= "Click ID:       {$click_id} ({$click_id_type})\n";
+if ($utm_id)       $body .= "Campaign ID:    {$utm_id}\n";
+if ($adgroupid)    $body .= "Ad Group ID:    {$adgroupid}\n";
+if ($matchtype)    $body .= "Match Type:     {$matchtype}\n";
+if ($network)      $body .= "Network:        {$network}\n";
+if ($targetid)     $body .= "Target ID:      {$targetid}\n";
+if ($loc_physical) $body .= "Loc (physical): {$loc_physical}\n";
+if ($loc_interest) $body .= "Loc (interest): {$loc_interest}\n";
+if ($gad_device)   $body .= "Device (Google):{$gad_device}\n";
 if ($device_type)  $body .= "Device:         {$device_type}\n";
 if ($browser_language) $body .= "Language:       {$browser_language}\n";
-if ($honeypot_filled) $body .= "⚠ Honeypot filled ({$honeypot_source}; deterministic spam signal)\n";
+if ($honeypot !== '') $body .= "⚠ Honeypot filled (treated as signal, not blocker)\n";
 $body .= "Submitted:   " . gmdate('d M Y H:i:s') . " UTC\n";
 $body .= "IP:          {$ip_address}\n";
 
