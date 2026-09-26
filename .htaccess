@@ -16,3 +16,9 @@
 # may still exist on disk, but every /mockup/* URL returns 404 (so the mockup
 # forms can't be loaded and can't POST to the live handler).
 RedirectMatch 404 ^/mockup(/.*)?$
+
+# Keep the second site, development files and repository metadata off RCN.
+RedirectMatch 404 ^/(dct-site|rcn-site|ops|docs|previews|reports|\.git)(/.*)?$
+<FilesMatch "^(AGENTS\.md|CLAUDE.*\.md|README\.md|\.env.*|\.gitignore)$">
+    Require all denied
+</FilesMatch>
