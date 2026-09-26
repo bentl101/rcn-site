@@ -7,7 +7,7 @@
 - **Never deploy the obsolete `rcn-site/` folder.** It lacks the thank-you page
   and assets and contains older page/handler copies.
 - FTPS: `ftp.unitcostdominance.com:21`, explicit TLS, user
-  `rcn@book.rivercruisenetwork.com`, root `/` (not `/public_html/`).
+  `rcn-deploy@book.rivercruisenetwork.com` (verified current credential), root `/` (not `/public_html/`).
 - Credentials: untracked `~/.rcn-deploy.env`. Never print or commit them.
 - Preserve all live CSV logs and `rcn-secrets.php`; never upload local copies.
 
