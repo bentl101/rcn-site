@@ -1023,3 +1023,12 @@ ul { list-style: none; }
     transform: none;
   }
 }
+
+/* Offer cards are native links to an enquiry for the selected cruise. */
+.offer-card:focus-visible { outline: 3px solid var(--navy); outline-offset: 4px; }
+.enquiry-selection:empty { display: none; }
+.enquiry-selection:not(:empty) { margin-bottom: 16px; padding: 12px 14px; border-left: 3px solid var(--teal-dark); background: var(--teal-light); color: var(--navy); font-size: 14px; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .offer-card, .offer-card-img img { transition: none; }
+}

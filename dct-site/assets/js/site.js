@@ -17,6 +17,14 @@
     'landing_page', 'referrer'
   ];
 
+  function readStorage(storageName, key) {
+    try { return window[storageName].getItem(key); } catch (_) { return null; }
+  }
+
+  function writeStorage(storageName, key, value) {
+    try { window[storageName].setItem(key, value); } catch (_) {}
+  }
+
   const icons = {
     light: '<path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><circle cx="12" cy="12" r="4"/>',
     dark: '<path d="M20 15.3A8.5 8.5 0 0 1 8.7 4a8.5 8.5 0 1 0 11.3 11.3Z"/>'
@@ -31,13 +39,13 @@
     }
   }
 
-  const savedTheme = localStorage.getItem(storageKey);
+  const savedTheme = readStorage('localStorage', storageKey);
   const preferredTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   setTheme(savedTheme || preferredTheme);
 
   themeButton?.addEventListener('click', () => {
     const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(storageKey, next);
+    writeStorage('localStorage', storageKey, next);
     setTheme(next);
   });
 
@@ -66,13 +74,13 @@
   }
 
   function readAttributionSession() {
-    try { return JSON.parse(sessionStorage.getItem(attributionKey) || '{}') || {}; }
+    try { return JSON.parse(readStorage('sessionStorage', attributionKey) || '{}') || {}; }
     catch (_) { return {}; }
   }
 
   function writeAttribution(attribution) {
     const value = JSON.stringify(attribution);
-    try { sessionStorage.setItem(attributionKey, value); } catch (_) {}
+    try { writeStorage('sessionStorage', attributionKey, value); } catch (_) {}
     try {
       const secure = window.location.protocol === 'https:' ? ';Secure' : '';
       document.cookie = `${attributionCookie}=${encodeURIComponent(value)};path=/;max-age=${attributionMaxAge};SameSite=Lax${secure}`;
@@ -229,9 +237,9 @@
         const field = form.querySelector(`[name="${name}"]`);
         if (field) field.value = value;
       });
-      sessionStorage.setItem('dct_lead_order_id', orderId);
-      sessionStorage.setItem('dct_lead_operator', operatorField?.value || 'Help me compare');
-      sessionStorage.setItem('dct_lead_source', form.querySelector('[name="source_page"]')?.value || '');
+      writeStorage('sessionStorage', 'dct_lead_order_id', orderId);
+      writeStorage('sessionStorage', 'dct_lead_operator', operatorField?.value || 'Help me compare');
+      writeStorage('sessionStorage', 'dct_lead_source', form.querySelector('[name="source_page"]')?.value || '');
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         event: 'form_submission',
@@ -245,6 +253,24 @@
         button.disabled = true;
         button.textContent = 'Sending your enquiry…';
       }
+    });
+  });
+
+  document.querySelectorAll('a[data-destination]').forEach((choice) => {
+    choice.addEventListener('click', (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const form = document.querySelector('#enquire [data-lead-form]');
+      const destination = form?.querySelector('[name="destination"]');
+      if (!destination) return;
+      destination.value = choice.dataset.destination;
+      destination.dispatchEvent(new Event('input', { bubbles: true }));
+      destination.dispatchEvent(new Event('change', { bubbles: true }));
+      const status = form.querySelector('.form-status');
+      if (status) {
+        status.textContent = `Your selected destination: ${destination.value}. You can change it below.`;
+        status.classList.add('show');
+      }
+      destination.focus({ preventScroll: true });
     });
   });
 
@@ -265,20 +291,20 @@
 
   const orderDisplay = document.querySelector('[data-order-id]');
   if (orderDisplay) {
-    const orderId = sessionStorage.getItem('dct_lead_order_id');
+    const orderId = readStorage('sessionStorage', 'dct_lead_order_id');
     if (orderId) {
       orderDisplay.textContent = orderId;
       const completeKey = `dct_complete_${orderId}`;
-      if (sessionStorage.getItem(completeKey) !== '1') {
+      if (readStorage('sessionStorage', completeKey) !== '1') {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: 'lead_form_complete',
           form_name: 'dct_enquiry',
-          form_operator: sessionStorage.getItem('dct_lead_operator') || '',
-          form_source: sessionStorage.getItem('dct_lead_source') || '',
+          form_operator: readStorage('sessionStorage', 'dct_lead_operator') || '',
+          form_source: readStorage('sessionStorage', 'dct_lead_source') || '',
           lead_order_id: orderId
         });
-        sessionStorage.setItem(completeKey, '1');
+        writeStorage('sessionStorage', completeKey, '1');
       }
     }
     else orderDisplay.closest('[data-order-wrap]')?.remove();
