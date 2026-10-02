@@ -412,8 +412,3 @@
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
   }
 }
-
-@layer components {
-  .destination-choice { gap: 0.5rem; min-height: 2.75rem; text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
-  .destination-choice:hover { background: var(--primary-soft); border-color: var(--primary); }
-}

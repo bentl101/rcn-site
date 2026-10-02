@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>River Cruises 2026 &amp; 2027 — River Cruise Network</title>
-  <meta name="description" content="Compare river cruises for 2026 and 2027 from Avalon, Scenic, Emerald, AmaWaterways and Viking. Get a free, personalised quote from a Canadian specialist.">
-  <link rel="stylesheet" href="assets/css/style.css?v=20261001a">
+  <title>River Cruise Network — Exclusive River Cruise Special Offers</title>
+  <meta name="description" content="Discover exclusive river cruise special offers with the world's leading cruise lines. Expert advice, exclusive pricing, and personalised service.">
+  <link rel="stylesheet" href="assets/css/style.css?v=20260926a">
   <link rel="icon" href="images/logo-three.png" type="image/png">
   <script src="assets/js/reviews-carousel.js?v=20260729a" defer></script>
   <!-- Google Tag Manager -->
@@ -56,9 +56,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- ══ HERO ════════════════════════════════════════════════════════════════ -->
 <section class="hero" style="background-image:url('images/cruise-min.jpg')">
   <div class="hero-content">
-    <span class="hero-eyebrow">River Cruises for 2026 &amp; 2027</span>
+    <span class="hero-eyebrow">Exclusive Offers 2026 / 2027</span>
     <h1>Discover the World's Most Beautiful Rivers</h1>
-    <p>Planning a 2026 getaway or a 2027 river cruise? Compare itineraries from five leading cruise lines with personal advice from Canada's river cruise specialists.</p>
+    <p>Unpack once and experience Europe's grand cities, Asia's ancient waterways, and beyond — with exclusive pricing from Canada's river cruise specialists.</p>
     <div class="hero-cta">
       <a href="#enquire" class="btn btn-teal btn-large">Get a Free Quote</a>
       <a href="#brands" class="btn btn-outline btn-large">Browse Cruise Lines</a>
@@ -68,7 +68,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- ══ TEAL BAND ════════════════════════════════════════════════════════════ -->
 <div class="teal-band">
-  <p><strong>Explore 2026 &amp; 2027 departures:</strong> Tell us where you’d like to sail. We’ll check current offers, cabin availability and pricing for your dates.</p>
+  <p><strong>★ Special 2026/2027 Savings:</strong> Up to $2,000 off per couple on selected sailings — call us or enquire online for today's best pricing.</p>
 </div>
 
 <!-- ══ BRAND CARDS ══════════════════════════════════════════════════════════ -->
@@ -422,13 +422,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <script>
   // Mobile nav toggle
-  // Some browsers disable storage; enquiries must still work.
-  function rcnReadSession(key) {
-    try { return window.sessionStorage.getItem(key); } catch (_) { return null; }
-  }
-  function rcnWriteSession(key, value) {
-    try { window.sessionStorage.setItem(key, value); } catch (_) {}
-  }
   var menuButton = document.getElementById('hamburger');
   var mainNav = document.getElementById('mainNav');
   menuButton.addEventListener('click', function() {
@@ -520,7 +513,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     });
   })();
   // Same-session re-submit UX: show friendly banner if user already submitted
-  if (rcnReadSession('rcn_submitted')) {
+  if (sessionStorage.getItem('rcn_submitted')) {
     document.querySelectorAll('form').forEach(function(form) {
       var banner = document.createElement('div');
       banner.style.cssText = 'background:#e8f7f8;border-left:4px solid #2DBDC5;color:#1A2B3D;padding:14px 16px;margin:0 0 20px;border-radius:6px;font-size:15px;line-height:1.5;';
@@ -549,12 +542,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       hidden.name = 'lead_order_id';
       hidden.value = leadOrderId;
       form.appendChild(hidden);
-      rcnWriteSession('lead_order_id', leadOrderId);
-      rcnWriteSession('lead_email', val('email'));
-      rcnWriteSession('lead_phone', val('phone'));
-      rcnWriteSession('lead_first_name', val('first_name'));
-      rcnWriteSession('lead_last_name', val('last_name'));
-      rcnWriteSession('rcn_submitted', '1');
+      sessionStorage.setItem('lead_order_id', leadOrderId);
+      sessionStorage.setItem('lead_email', val('email'));
+      sessionStorage.setItem('lead_phone', val('phone'));
+      sessionStorage.setItem('lead_first_name', val('first_name'));
+      sessionStorage.setItem('lead_last_name', val('last_name'));
+      sessionStorage.setItem('rcn_submitted', '1');
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
         'event': 'form_submission',
