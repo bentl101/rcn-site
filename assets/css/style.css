@@ -869,6 +869,7 @@ ul { list-style: none; }
 }
 
 .form-section { scroll-margin-top: 92px; }
+.offer-card:focus-visible,
 .header-callback:focus-visible,
 .hamburger:focus-visible,
 .google-rating:focus-visible,

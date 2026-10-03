@@ -166,7 +166,7 @@ def page(data: dict) -> str:
     name, short = escape(data["name"]), escape(data["short"])
     tags = "".join(f'<span class="tag">{escape(tag)}</span>' for tag in data["tags"])
     cards = "\n".join(f'<article class="feature-card"><h3>{escape(title)}</h3><p>{escape(copy)}</p></article>' for title, copy in data["cards"])
-    regions = "".join(f'<span class="tag">{escape(region)}</span>' for region in data["regions"])
+    regions = "".join(f'<a class="tag" href="#enquire" aria-label="Enquire about {escape(region)}">{escape(region)}</a>' for region in data["regions"])
     header_logo = header_brand()
     footer_logo = footer_brand()
     operator_nav = operator_navigation(data["slug"])
@@ -183,7 +183,7 @@ def page(data: dict) -> str:
   <link rel="icon" href="/assets/images/dct-logo-mark.svg?v=20260814b" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/site.css?v=20260903b">
+  <link rel="stylesheet" href="/assets/css/site.css?v=20261004links">
   <script>window.dataLayer=window.dataLayer||[];</script>
   <!-- Microsoft Clarity -->
   <script type="text/javascript">

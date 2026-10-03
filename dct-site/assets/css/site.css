@@ -270,6 +270,7 @@
   .breadcrumbs a { color: inherit; }
   .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .tag { display: inline-flex; min-height: 2rem; padding: 0.32rem 0.7rem; align-items: center; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface-raised); color: var(--primary); font-size: 0.74rem; font-weight: 800; }
+  a.tag { text-decoration: none; }
   .operator-hero .tag { border-color: rgb(255 255 255 / 28%); background: rgb(255 255 255 / 12%); color: var(--on-dark); backdrop-filter: blur(8px); }
   .operator-contact { color: rgb(255 250 241 / 72%); font-size: 0.82rem; font-weight: 650; }
   .operator-contact a { color: var(--on-dark); font-weight: 800; }
