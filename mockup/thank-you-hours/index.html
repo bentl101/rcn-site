@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><title>Thank-you page design review</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#edf0f3;color:#172b3b;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.review{padding:18px 26px;background:#fff;border-bottom:1px solid #d6dfe4;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap}.intro strong{display:block;font-size:17px}.intro p{margin:3px 0 0;color:#62707b;font-size:12px}.controls{display:flex;gap:16px;align-items:end;flex-wrap:wrap}label{display:grid;gap:5px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#63717b}select,button{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:1px solid #ced8df;border-radius:5px;padding:9px 12px;background:#fff;color:#172b3b;min-height:38px}button{cursor:pointer}button[aria-pressed="true"]{background:#172b3b;border-color:#172b3b;color:white}select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #167cba;outline-offset:3px}.description{padding:10px 26px;background:#f3f6f8;display:flex;gap:18px;justify-content:space-between;align-items:center;color:#536570;font-size:12px}.description a{color:#172b3b;text-underline-offset:3px;white-space:nowrap}.viewport{padding:20px;display:flex;justify-content:center}iframe{width:100%;height:calc(100dvh - 175px);min-height:640px;border:1px solid #d6dfe4;border-radius:8px;background:white;box-shadow:0 9px 24px #152c3a0a}.viewport.mobile iframe{width:390px;height:844px;min-height:0}@media(max-width:680px){.review{padding:14px 16px;gap:13px}.controls{gap:9px}select{max-width:155px;padding:8px}label{font-size:9px}.description{padding:10px 16px;align-items:start;gap:10px}.viewport{padding:10px}iframe{height:1000px;min-height:0}.viewport.mobile iframe{max-width:100%}.size-controls{display:none}}
+  </style>
+</head>
+<body>
+  <div class="review">
+    <div class="intro"><strong>Thank-you pages / two directions</strong><p>Design preview · RCN &amp; DCT · 9am–8pm Eastern phone hours</p></div>
+    <div class="controls">
+      <label>Brand<select id="brand"><option value="rcn">River Cruise Network</option><option value="dct">Discount Coach Tours</option></select></label>
+      <label>Design<select id="design"><option value="1">1 · Call first</option><option value="2">2 · Confirmation first</option></select></label>
+      <label>Phone hours<select id="hours"><option value="open">During hours</option><option value="closed">After hours</option><option value="auto">Actual Eastern time</option></select></label>
+      <div class="size-controls"><button id="desktop" type="button" aria-pressed="true">Desktop</button> <button id="mobile" type="button" aria-pressed="false">Mobile</button></div>
+    </div>
+  </div>
+  <div class="description"><span id="description"></span><a id="standalone" target="_blank" rel="noopener">Open page ↗</a></div>
+  <div class="viewport" id="viewport"><iframe id="preview" title="Thank-you page design preview"></iframe></div>
+  <script>
+    const brand = document.getElementById('brand');
+    const design = document.getElementById('design');
+    const hours = document.getElementById('hours');
+    const params = new URLSearchParams(location.search);
+    if (['rcn','dct'].includes(params.get('brand'))) brand.value = params.get('brand');
+    if (['1','2'].includes(params.get('design'))) design.value = params.get('design');
+    if (['open','closed','auto'].includes(params.get('hours'))) hours.value = params.get('hours');
+    function render() {
+      const url = `${brand.value}-option-${design.value}.html${hours.value === 'auto' ? '' : '?preview=' + hours.value}`;
+      document.getElementById('preview').src = url;
+      document.getElementById('standalone').href = url;
+      document.getElementById('description').textContent = hours.value === 'closed'
+        ? 'After 8pm and before 9am: the usual acknowledgement, with no call-now panel.'
+        : `${design.value === '1' ? 'Call first: a prominent phone button beside travel imagery.' : 'Confirmation first: familiar reassurance with a quieter call panel.'} 9am–8pm Eastern, every day.`;
+      history.replaceState(null, '', `?brand=${brand.value}&design=${design.value}&hours=${hours.value}`);
+    }
+    [brand, design, hours].forEach(control => control.addEventListener('change', render));
+    ['desktop','mobile'].forEach(size => document.getElementById(size).addEventListener('click', () => {
+      document.getElementById('viewport').classList.toggle('mobile', size === 'mobile');
+      document.getElementById('desktop').setAttribute('aria-pressed', String(size === 'desktop'));
+      document.getElementById('mobile').setAttribute('aria-pressed', String(size === 'mobile'));
+    }));
+    render();
+  </script>
+</body>
+</html>
