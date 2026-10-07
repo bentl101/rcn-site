@@ -45,3 +45,24 @@ for this test. Check the sole recipient and missing-field list in Gmail.
 
 Deployment uses the RCN explicit stage allowlist. Removing the script reference
 from the six pages disables collection without modifying the normal handler.
+
+## Production verification — 7 October 2026
+
+- Commit `7e27377` pushed before staging; eight explicit public files deployed.
+- FTPS timed out after uploading the endpoint, script and index; Avalon was left
+  empty and the other four pages were still on the baseline. Restored Avalon
+  immediately and finished via the existing cPanel SFTP connection, verified at
+  `/home/unitcostdominanc/book.rivercruisenetwork.com/`. All eight downloaded source
+  files matched staged bytes. Prefer SFTP with temporary-file/rename deployment
+  in future to avoid exposing interrupted uploads.
+- 77 allowlisted public HTML/CSS/JS/image URLs returned 200 and matched source.
+  `leads.csv` and `rcn-secrets.php` returned 403; `mockup/` returned 404.
+- Browser test on Avalon intentionally omitted only the itinerary. Native
+  validation focused the missing input and prevented the normal lead submission.
+- Exactly one test email arrived in Ben's Gmail at 18:47:55 UTC / 19:47:55 Ireland.
+  Reference `RCN-INCOMPLETE-20261007-184755-2edcc4ad`; recipient Ben only, no CC/BCC.
+  Repeated clicking produced no duplicate. The entered details and missing-field
+  list were checked in the delivered MIME body.
+- Desktop and 390px mobile rendering checked, no horizontal overflow or browser
+  console errors; mobile keyboard focus reaches the submit button. All six form
+  actions remain `submit-v2.php`; the existing thank-you target is unchanged.
