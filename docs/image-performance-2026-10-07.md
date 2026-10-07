@@ -19,4 +19,8 @@ Avalon had two eagerly loaded PNG photos totalling 3,657,911 bytes. PostHog reco
 
 All 15 pages retain identical visible copy, inline and external script definitions, links, form controls and form actions compared with saved live baselines. Image dimensions and responsive width descriptors match decoded files. Generated images are WebP and allowlisted separately by site. Original raster and SVG assets unchanged. RCN analytics regression checks pass, including destination asterisks and legacy Ads conversion baseline. Desktop/mobile Avalon and DCT previews inspected with no horizontal overflow. No sales forms submitted.
 
-Deployment and public verification results will be recorded after upload. Runtime gains require subsequent real visitor samples; byte savings alone do not establish a measured speed improvement.
+RCN deployed from its 50-file committed stage; all 50 FTP readbacks match. All 76 public HTML/CSS/JS/image URLs return HTTP 200 and match source bytes. Known private `leads.csv` and `rcn-secrets.php` return 403; mockup returns 404. Live desktop/mobile Avalon inspected; mobile card selects the 480-pixel WebP. All six destination asterisks and form actions verified by analytics regression checks.
+
+DCT remains prepared in its isolated 25-file stage, not uploaded: this Mac lacks the documented SSH alias/key. Automatic approval review blocked discovering alternative Bitwarden hosting credentials pending explicit user authorization. No DCT remote files were changed.
+
+Runtime gains require subsequent real visitor samples; byte savings alone do not establish a measured speed improvement.
