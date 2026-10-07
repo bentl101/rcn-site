@@ -346,5 +346,16 @@ $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 mail($RECIPIENT_EMAIL, $subject, $body, $headers);
 
 // ── 5) Redirect ───────────────────────────────────────────────────────────────
+// A short-lived, one-use browser signal for the analytics funnel. Set only
+// after CSV persistence; contains no lead data and makes no external request.
+if ($csv_write_ok) {
+    setcookie('rcn_lead_received', '1', [
+        'expires' => time() + 600,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => false,
+        'samesite' => 'Lax',
+    ]);
+}
 header('Location: ' . $THANK_YOU_URL);
 exit;
