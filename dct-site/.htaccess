@@ -6,7 +6,7 @@ ErrorDocument 404 /404.html
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
-  Header always set Content-Security-Policy "default-src 'self' https://*.clarity.ms https://c.bing.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: https://*.clarity.ms https://c.bing.com; script-src 'self' 'unsafe-inline' https://www.clarity.ms https://*.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.clarity.ms https://c.bing.com"
+  Header always set Content-Security-Policy "default-src 'self' https://*.clarity.ms https://c.bing.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: https://*.clarity.ms https://c.bing.com; script-src 'self' 'unsafe-inline' https://www.clarity.ms https://*.clarity.ms https://eu-assets.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.clarity.ms https://c.bing.com https://eu.i.posthog.com https://eu-assets.i.posthog.com; worker-src 'self' blob:"
 
   <FilesMatch "\.(?:css|js|svg|png|webp)$">
     Header set Cache-Control "public, max-age=604800, immutable"
@@ -30,3 +30,8 @@ ErrorDocument 404 /404.html
   RewriteEngine On
   RewriteRule ^(?:data|tools)(?:/|$) - [R=404,L,NC]
 </IfModule>
+
+# Prevent raw PHP backup source from being downloaded.
+<FilesMatch "\.php\.(?:before-|bak|old|backup)">
+  Require all denied
+</FilesMatch>
