@@ -32,6 +32,7 @@ Include:
 - Scope, test conditions and date; clear lab versus field evidence.
 - Page/device scores and LCP, CLS and TBT with units; INP only from appropriate interaction/field evidence.
 - A short prioritised list of measured issues, user impact, supporting evidence and proposed fixes.
+- An explicit urgency assessment: urgent, high, medium or low, with evidence and a concrete recommended fix. Reserve urgent for verified production failures or critical user/security impact; do not infer urgency from a low score alone. State when no urgent fault was identified and explain the limits of the checks. Keep audit findings separate from fixes actually implemented.
 - Intentional exclusions and remaining uncertainty. Noindex on thank-you/404 pages is normally correct. Review canonical alias warnings against equivalent content before calling them defects.
 - Verification status: what was measured, manually checked, changed, or remains untested. Automated SEO/accessibility scores do not establish rankings or compliance.
 

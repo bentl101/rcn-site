@@ -45,6 +45,8 @@ Avalon mobile (three equivalent local runs): median performance 62; median simul
 
 ## Findings and priorities
 
+**Urgency:** No urgent production fault was identified by these navigation audits. They do not establish end-to-end lead delivery or constitute a security assessment. Slow-mobile loading is a high-priority performance investigation, contrast is an accessibility remediation priority, and further image/cache tuning is a lower-priority optimisation. No production fixes were made during this audit.
+
 1. **Loading under slow-mobile conditions:** render-blocking Google Fonts and styles recur on both sites. Avalon’s local insight estimates about 1.96 seconds of potential savings; Google estimates 1.76 seconds. Treat estimates as opportunities, not guaranteed additive gains. Profile a font/critical-CSS change before deployment.
 2. **RCN analytics delivery:** one Avalon trace transferred roughly 507 KB for GTM/Ads/GA scripts, 222 KB for PostHog and 28 KB for Clarity. Both recording tools and a PostHog surveys module load. Review optional module delivery and scheduling while retaining attribution, form events and server-side conversion behaviour. These figures establish transfer cost, not that a specific vendor alone caused the LCP delay.
 3. **Accessibility:** contrast failures recur: RCN white text on turquoise has an observed 2.28:1 contrast ratio; DCT callback text is about 4.4:1 versus a 4.5:1 requirement. Some RCN pages also lack a main landmark. Plan targeted styling/semantic fixes preserving sales copy and CTA intent. Automated scores do not establish WCAG compliance.
