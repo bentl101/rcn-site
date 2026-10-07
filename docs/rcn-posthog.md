@@ -63,3 +63,25 @@ Run `node ops/test_rcn_analytics.js` for isolation, privacy, event semantics,
 deduplication, timing, mandatory-destination labels and the legacy Ads baseline.
 Deploy only the explicit RCN allowlist with `ops/stage_site.py`; compare fresh
 live versions before upload and preserve all live secrets and lead CSVs.
+
+## Verified deployment — 7 October 2026
+
+- Deployment commit: `9403c4c`, pushed before staging and upload.
+- Nine explicit RCN files uploaded and verified byte-for-byte over FTPS.
+- All 34 public HTML/CSS/JS/image URLs returned HTTP 200; public staged
+  frontend bytes also matched. All six itinerary labels retained their asterisks.
+- `leads.csv` and `rcn-secrets.php` HEAD requests returned 403; `/mockup/`
+  returned 404. Nonexistent example archive names returned 404, not content.
+- An ordinary handler GET redirected to `/index.html?error=1` without a
+  persistence marker. No sales form was submitted.
+- JavaScript behavior tests and PHP 7.4 syntax parsing passed. Desktop and
+  390px mobile views, CTA scroll, field focus and keyboard Tab were checked.
+- PostHog received test and ordinary visitor events, page timings, Core Web
+  Vitals and two initial recordings. The saved speed query returned ordinary
+  visitor results with test visits excluded.
+- Both hourly email alerts were enabled. PostHog's test-delivery endpoint
+  reported one email recipient and no failed delivery channels.
+
+The few initial speed samples are insufficient to assess overall performance.
+Persistence confirmation was verified in isolated behavior tests; no live
+end-to-end lead submission was performed.
