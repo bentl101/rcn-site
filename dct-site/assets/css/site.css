@@ -149,7 +149,7 @@
     background: #2b123c;
   }
   .hero::before {
-    position: absolute; z-index: -2; inset: 0; content: ""; background-image: url("../images/hero-coach-rockies.webp");
+    position: absolute; z-index: -2; inset: 0; content: ""; background-image: url("../images/optimized/hero-coach-rockies-1672.webp");
     background-position: 62% center; background-size: cover; transform: scale(1.01);
   }
   .hero::after {
@@ -255,10 +255,10 @@
 
   .operator-hero { position: relative; min-height: 41rem; display: grid; isolation: isolate; overflow: hidden; background: #21112c; }
   .operator-hero::before { position: absolute; z-index: -2; inset: 0; content: ""; background-position: center; background-size: cover; }
-  .operator-page-trafalgar .operator-hero::before { background-image: url("../images/trafalgar-guests.webp"); }
-  .operator-page-globus .operator-hero::before { background-image: url("../images/globus-alps.webp"); }
-  .operator-page-cosmos .operator-hero::before { background-image: url("../images/cosmos-highlands.webp"); }
-  .operator-page-insight .operator-hero::before { background-image: url("../images/insight-lake-como.webp"); }
+  .operator-page-trafalgar .operator-hero::before { background-image: url("../images/optimized/trafalgar-guests-1200.webp"); }
+  .operator-page-globus .operator-hero::before { background-image: url("../images/optimized/globus-alps-1200.webp"); }
+  .operator-page-cosmos .operator-hero::before { background-image: url("../images/optimized/cosmos-highlands-1200.webp"); }
+  .operator-page-insight .operator-hero::before { background-image: url("../images/optimized/insight-lake-como-1200.webp"); }
   .operator-hero::after { position: absolute; z-index: -1; inset: 0; content: ""; background: linear-gradient(90deg, rgb(25 11 36 / 94%), rgb(31 15 42 / 55%) 56%, rgb(18 10 26 / 18%)); }
   .operator-hero-inner { min-height: inherit; display: grid; padding-block: 5rem; align-content: center; }
   .operator-hero-copy { display: grid; max-width: 44rem; gap: 1.25rem; }
