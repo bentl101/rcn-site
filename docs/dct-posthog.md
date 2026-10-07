@@ -28,3 +28,19 @@ Use `?dct_analytics_test=1` for QA. All alert queries exclude `is_test=true`.
 Browser monitoring cannot detect every server-side error, email delivery failure,
 or downstream processing issue. Existing server delivery monitoring is separate.
 If the analytics library is blocked, browser error reporting may be unavailable.
+
+## Verification, 7 October 2026
+
+- Commits `ee64a38` and `e72681a` pushed before allowlisted SFTP deployment.
+- Nine public tracking/page files matched uploaded bytes; all 50 public HTML,
+  CSS, JavaScript and image URLs returned HTTP 200.
+- Live pageviews and `dct_form_handler_error` arrived in project 297565;
+  diagnostic visits carry `is_test=true` and are excluded from alert queries.
+- Behaviour checks passed for DCT/RCN isolation, startup errors, unhandled
+  rejections, handler and resource failures, URL scrubbing and input masking.
+- The DCT CSP now permits only the required EU PostHog asset/ingestion hosts.
+- Two existing raw PHP backups were found reachable using HEAD requests only;
+  a narrow FilesMatch deny rule now returns 403 for both. Private lead/secret
+  checks returned 404. No backup body or lead data was retrieved.
+- No sales enquiry was submitted. Shell access is disabled on this account;
+  SFTP with the existing Mac SSH key succeeded.
