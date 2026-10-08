@@ -57,3 +57,15 @@ If the analytics library is blocked, browser error reporting may be unavailable.
   checks returned 404. No backup body or lead data was retrieved.
 - No sales enquiry was submitted. Shell access is disabled on this account;
   SFTP with the existing Mac SSH key succeeded.
+
+## Validation-event verification, 8 October 2026
+
+Commit `1132cea` deployed through an explicit nine-file DCT stage using SFTP
+uploads to temporary names followed by atomic replacements. All nine deployed
+files matched staged bytes; all 50 public page/asset URLs returned 200 and matched
+source. Private endpoints remained inaccessible. The labelled Globus browser
+test generated nine `required` events and one email `format` event, verified in
+PostHog with a fresh query at 17:02 UTC. Repeated missing-field checks did not
+multiply those events. Native validation prevented submission; no lead created.
+Desktop and 390px mobile checks passed. Existing open/cached pages require a
+fresh page load to use the versioned script reference.
