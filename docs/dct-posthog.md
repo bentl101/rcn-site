@@ -12,6 +12,19 @@ load failures (`dct_resource_error`), missing pages (`dct_page_not_found`), and
 handler redirects (`dct_form_handler_error`, recognised `form_error` values).
 A thank-you view is not proof of persisted or delivered lead data.
 
+From 8 October, `dct_form_validation_error` records browser validation failures
+on all five enquiry pages. Properties are allowlisted `field_name` and
+`validation_reason` (`required`, `format`, or `invalid`), alongside the existing
+page/site/test context. No entered value or browser validation-message text is
+collected. The listener uses capture phase for native non-bubbling `invalid`
+events, preserves native validation, and deduplicates each field/reason pair
+per form/page load. These counts represent distinct field/reason failures on a
+page visit, not the number of submit-button clicks. Existing submit events still
+mean the form passed native validation. Historical missing-field failures cannot
+be reconstructed. This adds PostHog events, not incomplete-enquiry emails.
+
+Run `node ops/test_dct_analytics.js` for validation/privacy/queue/isolation checks.
+
 Four enabled hourly email alerts notify btl101@gmail.com when the previous hour
 has at least one matching non-test error. These are scheduled checks rather than
 instant notifications. Existing RCN JavaScript and handler alerts remain enabled.

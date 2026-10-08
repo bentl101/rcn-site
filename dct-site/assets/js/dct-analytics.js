@@ -61,7 +61,21 @@
     if(document.title.indexOf('Page not found')===0 && location.pathname!='/404.html')capture('dct_page_not_found');
     document.querySelectorAll('[data-lead-form]').forEach(function(form){
       var started=false;
+      var invalidFields = {};
       form.addEventListener('focusin',function(){if(!started){started=true;capture('dct_form_started');}});
+      // Native invalid events do not bubble. Capture them without changing
+      // validation or collecting field values / browser validation messages.
+      form.addEventListener('invalid',function(e){
+        var field = e.target.name;
+        if (!/^(first_name|last_name|email|phone|destination|departure_city|travel_date|duration|guests|budget|operator|pace|contact_preference)$/.test(field)) return;
+        var validity = e.target.validity;
+        var reason = validity.valueMissing ? 'required' : validity.typeMismatch ? 'format' : 'invalid';
+        var key = field + ':' + reason;
+        if (!invalidFields[key]) {
+          invalidFields[key] = true;
+          capture('dct_form_validation_error',{field_name:field,validation_reason:reason});
+        }
+      },true);
       form.addEventListener('submit',function(){capture('dct_form_submit_attempted');},true);
     });
     if(location.pathname==='/thank-you.html')capture('dct_thank_you_viewed');
