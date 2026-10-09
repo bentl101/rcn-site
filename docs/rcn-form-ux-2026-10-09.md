@@ -51,3 +51,19 @@ After release, verify every allowlisted public HTML/CSS/JS/image against source,
 protected endpoints, live mobile/desktop rendering and browser errors. Technical
 passing checks are not proof of improved genuine delivered lead volume; compare
 subsequent account-local periods with QA excluded.
+
+## Production verification
+
+- Release `2946ce0` pushed to `codex/clarity-2026-2027` before staging/upload.
+  The live-baseline recheck passed, then all eight files were uploaded with
+  temporary-file/rename operations to the verified RCN root.
+- All **78** allowlisted HTML/CSS/JS/image files returned HTTP 200 and exactly
+  matched source. `leads.csv` and `rcn-secrets.php` returned 403; `mockup/` and the
+  nonexistent `leads-archive.csv` probe returned 404. No private bodies fetched.
+- Live Avalon at 1280px and 390px: correct offer itinerary, form-heading focus
+  below the sticky header, native validation enabled, no horizontal overflow.
+  The persistent-error component was installed. No browser errors observed in
+  the checked live session. Existing form action is still `submit-v2.php`.
+- No production form submission or incomplete-form email was triggered by QA.
+  All submission/invalid-attempt tests used isolated localhost endpoints.
+- User's pre-existing changes and untracked material were left untouched.
