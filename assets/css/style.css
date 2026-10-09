@@ -442,6 +442,26 @@ ul { list-style: none; }
 .form-submit .btn { width: 100%; padding: 15px; font-size: 16px; }
 .form-disclaimer { font-size: 11px; color: #888; text-align: center; margin-top: 10px; line-height: 1.5; }
 
+/* Persistent RCN form errors; native validation remains the submission gate. */
+.rcn-form-errors {
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border: 2px solid #b42318;
+  border-radius: 6px;
+  background: #fff4f2;
+  color: #812018;
+  font-size: 15px;
+}
+.rcn-form-errors[hidden] { display: none; }
+.rcn-form-errors p { margin: 0 0 8px; font-weight: 600; }
+.rcn-form-errors ul { margin: 0; padding-left: 22px; }
+.rcn-form-errors a { color: #812018; text-decoration: underline; display: inline-block; padding: 3px 0; }
+.rcn-field-error { color: #b42318; font-size: 14px; line-height: 1.5; margin: 6px 0 0; }
+.form-group [aria-invalid="true"] { border: 2px solid #b42318; }
+.form-group [aria-invalid="true"]:focus { outline: 2px solid #b42318; outline-offset: 2px; box-shadow: none; }
+.form-box h3[tabindex="-1"], .form-group input, .form-group select, .form-group textarea { scroll-margin-top: 100px; }
+.form-box h3[tabindex="-1"]:focus-visible, .rcn-form-errors a:focus-visible { outline: 2px solid #136b72; outline-offset: 3px; }
+
 /* === Homepage Brand Cards === */
 .brands-section { padding: 64px 24px; background: #fff; }
 .brands-grid {
