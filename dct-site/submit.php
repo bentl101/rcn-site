@@ -13,26 +13,7 @@ function clean_value(string $key, int $max = 500): string
     return substr(trim(strip_tags(str_replace(["\r", "\0"], '', $value))), 0, $max);
 }
 
-function csv_safe(string $value): string
-{
-    return preg_match('/^[=+\-@]/', $value) ? "'" . $value : $value;
-}
-
-function append_csv(string $path, array $columns, array $row): bool
-{
-    $isNew = !file_exists($path) || filesize($path) === 0;
-    $handle = fopen($path, 'ab');
-    if ($handle === false) return false;
-    $ok = false;
-    if (flock($handle, LOCK_EX)) {
-        if ($isNew) fputcsv($handle, $columns);
-        $ok = fputcsv($handle, array_map('csv_safe', $row)) !== false;
-        fflush($handle);
-        flock($handle, LOCK_UN);
-    }
-    fclose($handle);
-    return $ok;
-}
+require_once __DIR__ . '/csv-log.php';
 
 function normalise_email_for_ads(string $email): string
 {
@@ -101,6 +82,16 @@ if (clean_value('website', 200) !== '') {
     exit;
 }
 
+// Idempotent private-log preflight. An empty POST can repair the historical
+// schema, then fail validation below without creating a lead or sending mail.
+// GET requests exit above and cannot perform repairs or create records.
+$dataDir = getenv('DCT_DATA_DIR') ?: dirname(__DIR__) . '/dct-private-data';
+if (!dct_repair_lead_csv(rtrim($dataDir, '/') . '/leads.csv')) {
+    error_log('DCT: private lead log schema check failed');
+    header('Location: /?form_error=server#enquire', true, 303);
+    exit;
+}
+
 $required = ['first_name', 'last_name', 'email', 'phone', 'destination', 'travel_date', 'duration', 'guests', 'budget'];
 foreach ($required as $key) {
     if (clean_value($key) === '') {
@@ -166,7 +157,6 @@ $lead = [
     'action_token' => $actionToken,
 ];
 
-$dataDir = getenv('DCT_DATA_DIR') ?: dirname(__DIR__) . '/dct-private-data';
 if (!is_dir($dataDir) && !mkdir($dataDir, 0770, true) && !is_dir($dataDir)) {
     error_log('DCT: unable to create private data directory');
     header('Location: /?form_error=server#enquire', true, 303);
@@ -174,7 +164,9 @@ if (!is_dir($dataDir) && !mkdir($dataDir, 0770, true) && !is_dir($dataDir)) {
 }
 $logLead = $lead;
 unset($logLead['action_token']);
-if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', array_keys($logLead), array_values($logLead))) {
+$logColumns = dct_lead_csv_columns();
+$logRow = array_map(static fn($column) => $logLead[$column] ?? '', $logColumns);
+if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', $logColumns, $logRow)) {
     error_log('DCT: unable to write private lead log');
     header('Location: /?form_error=server#enquire', true, 303);
     exit;

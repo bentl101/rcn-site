@@ -8,6 +8,7 @@ Static HTML/CSS/JS with a PHP lead handler, live at `https://book.discountcoacht
 - Approved pages are public and indexable; thank-you and 404 remain `noindex`.
 - Separate PPC pages and forms exist for Trafalgar, Globus, Cosmos and Insight Vacations.
 - `submit.php` writes every valid lead to `~/dct-private-data/leads.csv` before calling either delivery path.
+- `csv-log.php` preserves the original 48-column private CSV schema, including blank retired `departure_city` and `pace` fields on new leads. Appends lock before reading the header and map values by field name. The handler's POST preflight repairs the known 46-field historical rows under the same lock, retaining a verified mode-600 private `leads.csv.schema-backup-*` before rewriting. Unknown schemas fail closed. GETs do not repair or create leads; an empty POST repairs only and then returns the normal missing-fields redirect. Tests: `php ops/test_dct_csv_log.php` from the repository root (synthetic fixtures only).
 - The PHP/cPanel handler sends a direct hosting backup email and audits the attempt in `~/dct-private-data/direct-email-deliveries.csv`.
 - The n8n handoff is audited separately in `~/dct-private-data/n8n-deliveries.csv`.
 - The dedicated n8n webhook is `/webhook/dct-form`, protected by `X-DCT-Token`.
