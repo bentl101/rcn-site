@@ -55,3 +55,23 @@ Never upload the builder, tests, docs, handler, secrets or lead data.
 Verify all allowlisted public assets, private-path protections and live rendering
 without submitting a production form. Technical success does not prove a lead
 conversion-rate improvement; evaluate genuine delivered leads with QA excluded.
+
+## Production verification
+
+- Release `d7c1d3a` was pushed before staging and deployment. The seven public
+  files above were uploaded individually after live-baseline comparisons, using
+  temporary files and rename; staged file/directory permissions were 644/755.
+- All 51 allowlisted public HTML/CSS/JS/image URLs returned HTTP 200 and matched
+  the repository bytes. All five enquiry forms still post to `/submit.php`.
+- HEAD probes of `leads.csv`, `dct-secrets.php`, `data/` and `tools/` returned
+  HTTP 404. DCT's actual private leads and secrets remain outside the public
+  directory and were not accessed or replaced. The verification helper initially
+  expected 403 for the first two nonexistent public paths; that test expectation
+  was corrected to 404, without changing server protections.
+- Live Trafalgar desktop and 390px mobile destination links populated the
+  selected destination and focused the form card outside the form, approximately
+  116px below the viewport top. Keyboard activation worked, native validation
+  remained enabled, and neither viewport had horizontal overflow. No browser
+  console errors were recorded on that live page.
+- No production form was submitted. No live test lead, email or conversion was
+  created. Existing unrelated working-tree changes were left untouched.
