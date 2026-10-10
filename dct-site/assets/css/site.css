@@ -20,6 +20,9 @@
     --accent-strong: #b61931;
     --gold: #d59a3a;
     --success: #177245;
+    --form-error: #b42318;
+    --form-error-bg: #fff4f2;
+    --form-error-ink: #812018;
     --focus: #007f94;
     --on-dark: #fffaf1;
     --shadow-sm: 0 8px 24px rgb(50 21 81 / 9%);
@@ -217,7 +220,7 @@
   .form-section + .form-section { padding-top: 1.5rem; border-top: 1px solid var(--line); }
   .form-section h3 { font-family: var(--font-body); font-size: 0.82rem; font-weight: 850; letter-spacing: 0.12em; text-transform: uppercase; }
   .field-grid { display: grid; gap: 1rem; }
-  .field { display: grid; gap: 0.42rem; }
+  .field { display: grid; gap: 0.42rem; align-content: start; }
   label, legend { color: var(--ink); font-size: 0.84rem; font-weight: 760; }
   label .optional { color: var(--ink-soft); font-weight: 500; }
   input, select, textarea {
@@ -238,6 +241,15 @@
   .privacy-note { color: var(--ink-soft); font-size: 0.76rem; line-height: 1.5; }
   .form-status { display: none; padding: 0.8rem; border-radius: var(--radius-sm); background: var(--primary-soft); color: var(--primary); font-weight: 700; }
   .form-status.show { display: block; }
+  .dct-form-errors { padding: 1rem; border: 2px solid var(--form-error); border-radius: var(--radius-sm); background: var(--form-error-bg); color: var(--form-error-ink); font-size: 0.9rem; }
+  .dct-form-errors[hidden] { display: none; }
+  .dct-form-errors p { margin-bottom: 0.5rem; color: inherit; font-weight: 750; }
+  .dct-form-errors ul { padding-left: 1.35rem; }
+  .dct-form-errors a { display: inline-block; padding-block: 0.2rem; color: inherit; text-decoration: underline; }
+  .dct-field-error { color: var(--form-error); font-size: 0.875rem; line-height: 1.5; }
+  .field [aria-invalid="true"] { border: 2px solid var(--form-error); }
+  .field [aria-invalid="true"]:focus { outline: 2px solid var(--form-error); outline-offset: 2px; box-shadow: none; }
+  .form-card[tabindex="-1"], .field input, .field select, .field textarea { scroll-margin-top: calc(var(--header-h) + 2rem); }
   .hp { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .check-list { display: grid; gap: 0.8rem; list-style: none; }
@@ -399,6 +411,9 @@
     --accent-strong: #c92c45;
     --gold: #e3bc65;
     --success: #67d8a4;
+    --form-error: #ffb4ac;
+    --form-error-bg: #3c2027;
+    --form-error-ink: #ffe4e0;
     --focus: #72d5e7;
     --shadow-sm: 0 8px 24px rgb(0 0 0 / 24%);
     --shadow-lg: 0 26px 70px rgb(0 0 0 / 38%);
