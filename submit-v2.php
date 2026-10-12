@@ -12,7 +12,8 @@
  */
 
 // ── Config ────────────────────────────────────────────────────────────────────
-$RECIPIENT_EMAIL = 'sales@rivercruisenetwork.com, btl101@gmail.com';
+// Raw backup/debug leads go to operations; n8n sends processed leads to sales.
+$RECIPIENT_EMAIL = 'btl101@gmail.com';
 $SITE_NAME       = 'River Cruise Network';
 $THANK_YOU_URL   = '/thank-you.html';
 $ERROR_URL       = '/index.html?error=1';
