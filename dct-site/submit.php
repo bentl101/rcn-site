@@ -173,7 +173,8 @@ if (!append_csv(rtrim($dataDir, '/') . '/leads.csv', $logColumns, $logRow)) {
 }
 
 $isQa = $lead['qa_test'] === '1';
-$directMailTo = $isQa ? 'btl101@gmail.com' : 'sales@rivercruisenetwork.com, btl101@gmail.com';
+// Raw hosting backup/debug leads go to operations; n8n sends processed leads to sales.
+$directMailTo = 'btl101@gmail.com';
 $directMailSubject = ($isQa ? '[TEST] ' : '') . '[HOSTING] New DCT lead - ' . mail_safe_value(trim($lead['first_name'] . ' ' . $lead['last_name']));
 $directMailHeaders = implode("\r\n", [
     'From: Discount Coach Tours <website@discountcoachtours.ca>',
