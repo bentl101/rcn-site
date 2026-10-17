@@ -38,6 +38,19 @@ nodes. They cannot send email, write CRM/Sheets, or upload Google Ads conversion
 - Both routes unavailable: existing emergency 80, send to sales, scorer error
   true, original lead preserved.
 - Each temporary test workflow and its executions were removed after testing.
+- Eight candidate parser regressions passed: valid contacts, invalid phone,
+  both contacts invalid, email-only invalidity, Chris/Christmas name collision,
+  full scorer outage, outage with invalid phone, and outage with both contacts
+  invalid.
+
+## Deployment result
+
+Committed and pushed as `5dd2b4c`, then applied through the n8n API.
+Read-back confirmed the workflow is active and its published `activeVersionId`
+equals the new `versionId` (`ec5a75e6-bb95-4e17-a178-ad10ab793c6e`).
+The dedicated Anthropic credential reference is present and the old OpenCode Go
+fallback nodes are absent from RCN. Unrelated nodes and live `staticData` were
+unchanged. No real lead was replayed and no test email or conversion was sent.
 
 The helper backs up the immediate live baseline, rejects configuration drift,
 and omits `staticData` from PUT to preserve live pacing and deduplication state.
