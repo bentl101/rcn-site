@@ -74,5 +74,5 @@ for(const name of ['index.html','trafalgar-tours.html','globus-journeys.html','c
   assert(!/rcn-form-ux|GTM-5B2VFP82|AW-10929471967/.test(html));
 }
 const builder=fs.readFileSync('dct-site/tools/build_operator_pages.py','utf8');
-assert.match(builder,/dct-form-ux.js\?v=20261010a/);assert.match(builder,/dct-analytics.js\?v=20261008validation/);
+assert.match(builder,/dct-form-ux.js\?v=20261010a/);assert.match(builder,/dct-analytics.js\?v=20261018claritywatch/);
 console.log('PASS: nine required-field errors, first-error/keyboard focus, correction and format errors, deduplicated announcements, described-by preservation, optional/hidden/honeypot exclusion, destination prefill/manual text, attribution preserved, five-page and builder wiring.');

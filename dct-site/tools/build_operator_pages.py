@@ -183,7 +183,7 @@ def page(data: dict) -> str:
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;650;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/site.css?v=20261010forms">
-  <script src="/assets/js/dct-analytics.js?v=20261008validation" defer></script>
+  <script src="/assets/js/dct-analytics.js?v=20261018claritywatch" defer></script>
   <script src="/assets/js/dct-form-ux.js?v=20261010a" defer></script>
   <script>window.dataLayer=window.dataLayer||[];</script>
   <!-- Microsoft Clarity -->
