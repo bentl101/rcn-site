@@ -42,6 +42,31 @@ Browser monitoring cannot detect every server-side error, email delivery failure
 or downstream processing issue. Existing server delivery monitoring is separate.
 If the analytics library is blocked, browser error reporting may be unavailable.
 
+## Clarity review queue
+
+The existing Clarity installation receives fixed form/error event names and
+session tags from `dct-analytics.js`, without form values, raw errors, URLs or
+lead identifiers. A standard command queue supports a late Clarity load; failures
+are caught and do not interfere with enquiries. PostHog settings remain unchanged.
+
+Tags: `site=dct`, `analytics_test=true|false`, `enquiry_started=yes`,
+`enquiry_submit_attempted=yes`, and `enquiry_thank_you_viewed=yes`. A thank-you
+visit is not proof of a saved or delivered enquiry; DCT never emits
+`enquiry_received`. Watchworthy sessions get `watch=yes` (`qa` in test mode)
+and a fixed `watch_reason`: `form_handler_error`, `javascript_error`,
+`unhandled_rejection`, `repeated_validation`, `thank_you_visit`, `resource_error`
+or `page_not_found`. Reasons and Clarity events are deduplicated per page.
+Repeated validation requires a second invalid event for the same allowlisted
+field; a first burst across different fields does not qualify.
+
+In Clarity, save a segment with `watch=yes`, `site=dct`, excluding
+`analytics_test=true`, then add it to My Watchlist. Exclude test=true rather than
+only including false: multiple values can accumulate during a session.
+A separate potential-abandonment view includes `enquiry_started=yes` and excludes
+`enquiry_thank_you_viewed=yes`, with the same test exclusion. This identifies
+sessions worth reviewing, not confirmed lost leads. New tags may take time to
+appear in Clarity's filter picker. Tags do not automatically favorite recordings.
+
 ## Verification, 7 October 2026
 
 - Commits `ee64a38` and `e72681a` pushed before allowlisted SFTP deployment.

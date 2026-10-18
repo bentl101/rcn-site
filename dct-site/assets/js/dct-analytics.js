@@ -4,6 +4,42 @@
   if (location.hostname !== 'book.discountcoachtours.ca') return;
   var test = new URLSearchParams(location.search).get('dct_analytics_test') === '1';
   var client = null, queue = [];
+  var clarityEvents = {}, watchReasons = {}, watchMarked = false;
+  // Queue for the existing Clarity tag; do not install another SDK or send
+  // enquiry values, error text, URLs or lead identifiers to the watch queue.
+  function clarityCall() {
+    try {
+      if (typeof window.clarity === 'undefined') {
+        window.clarity = function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
+      }
+      if (typeof window.clarity === 'function') window.clarity.apply(window, arguments);
+    } catch (_) { /* Recording must never interfere with an enquiry. */ }
+  }
+  function markWatch(reason) {
+    if (!/^(form_handler_error|javascript_error|unhandled_rejection|repeated_validation|thank_you_visit|resource_error|page_not_found)$/.test(reason) || watchReasons[reason]) return;
+    watchReasons[reason] = true;
+    if (!watchMarked) {
+      watchMarked = true;
+      clarityCall('set', 'watch', test ? 'qa' : 'yes');
+    }
+    clarityCall('set', 'watch_reason', reason);
+  }
+  function clarityEvent(event) {
+    if (!/^(dct_form_started|dct_form_validation_error|dct_form_submit_attempted|dct_form_handler_error|dct_thank_you_viewed|dct_resource_error|dct_page_not_found)$/.test(event) || clarityEvents[event]) return;
+    clarityEvents[event] = true;
+    clarityCall('event', event);
+    if (event === 'dct_form_started') clarityCall('set', 'enquiry_started', 'yes');
+    else if (event === 'dct_form_submit_attempted') clarityCall('set', 'enquiry_submit_attempted', 'yes');
+    else if (event === 'dct_form_handler_error') markWatch('form_handler_error');
+    else if (event === 'dct_resource_error') markWatch('resource_error');
+    else if (event === 'dct_page_not_found') markWatch('page_not_found');
+    else if (event === 'dct_thank_you_viewed') {
+      clarityCall('set', 'enquiry_thank_you_viewed', 'yes');
+      markWatch('thank_you_visit');
+    }
+  }
+  clarityCall('set', 'site', 'dct');
+  clarityCall('set', 'analytics_test', test ? 'true' : 'false');
   function cleanUrl(value) {
     try { var u = new URL(value, location.origin); return u.origin + u.pathname; }
     catch (_) { return ''; }
@@ -20,14 +56,17 @@
     return value;
   }
   function capture(name, props) {
+    clarityEvent(name);
     var data = Object.assign({site:'dct',page_path:location.pathname,is_test:test},props || {});
     if (client) client.capture(name,data); else queue.push([name,data]);
   }
   window.addEventListener('error',function(e){
+    if (e.message) markWatch('javascript_error');
     if (!client && e.message) capture('$exception',{$exception_list:[{type:'Error',value:scrub(e.message),mechanism:{type:'onerror',handled:false}}]});
     if (!e.message && e.target && /^(SCRIPT|LINK|IMG)$/.test(e.target.tagName)) capture('dct_resource_error',{resource_type:e.target.tagName,resource_url:cleanUrl(e.target.src || e.target.href || '')});
   },true);
   window.addEventListener('unhandledrejection',function(e){
+    markWatch('unhandled_rejection');
     if (!client) capture('$exception',{$exception_list:[{type:'UnhandledRejection',value:scrub(String(e.reason && e.reason.message || e.reason || 'Unhandled promise rejection')),mechanism:{type:'onunhandledrejection',handled:false}}]});
   });
   var sdk=document.createElement('script'); sdk.async=true;
@@ -61,13 +100,15 @@
     if(document.title.indexOf('Page not found')===0 && location.pathname!='/404.html')capture('dct_page_not_found');
     document.querySelectorAll('[data-lead-form]').forEach(function(form){
       var started=false;
-      var invalidFields = {};
+      var invalidFields = {}, invalidCounts = {};
       form.addEventListener('focusin',function(){if(!started){started=true;capture('dct_form_started');}});
       // Native invalid events do not bubble. Capture them without changing
       // validation or collecting field values / browser validation messages.
       form.addEventListener('invalid',function(e){
         var field = e.target.name;
         if (!/^(first_name|last_name|email|phone|destination|departure_city|travel_date|duration|guests|budget|operator|pace|contact_preference)$/.test(field)) return;
+        invalidCounts[field] = (invalidCounts[field] || 0) + 1;
+        if (invalidCounts[field] === 2) markWatch('repeated_validation');
         var validity = e.target.validity;
         var reason = validity.valueMissing ? 'required' : validity.typeMismatch ? 'format' : 'invalid';
         var key = field + ':' + reason;
