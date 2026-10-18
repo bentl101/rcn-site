@@ -45,6 +45,43 @@ account's recording allowance; adjust sampling in the dedicated RCN project's
 replay settings as traffic warrants. The SDK is loaded asynchronously; blocked
 analytics does not prevent enquiries. Existing Clarity and Ads tags remain.
 
+## Clarity review tags
+
+The existing GTM Clarity installation also receives the seven `rcn_form_*`,
+`rcn_thank_you_viewed` and `rcn_lead_received` funnel/error events listed above,
+once per event per page. It receives no PostHog event properties, form values,
+field names, error text, lead IDs or URLs through this integration. A standard
+Clarity command queue holds tags if GTM loads later; no second SDK is installed.
+
+Every tagged page sets `site=rcn` and `analytics_test=true|false`. The following
+session tags support recording filters:
+
+| Tag | Meaning |
+|---|---|
+| `enquiry_started=yes` | First focus in an editable enquiry field |
+| `enquiry_submit_attempted=yes` | Valid submit event, not confirmation |
+| `enquiry_thank_you_viewed=yes` | Thank-you page visit, including direct visits |
+| `enquiry_received=yes` | Current one-use server persistence cookie consumed |
+| `watch=yes` | Ordinary session with a reason to review |
+| `watch=qa` | Test page with a reason to review |
+
+`watch_reason` uses only `form_handler_error`, `javascript_error`,
+`unhandled_rejection`, `repeated_validation`, `thank_you_visit` and
+`lead_received`. Each reason is sent once per page. Repeated validation means a
+second native invalid event for the same allowlisted field; a first invalid
+burst across several fields does not qualify. JavaScript error/rejection tags
+work before and after PostHog loads. Clarity failures are caught and do not
+prevent enquiries.
+
+For a review segment, filter `site=rcn`, `watch=yes`, and exclude
+`analytics_test=true`. Clarity can retain several tag values in one session, so
+excluding test sessions is stronger than merely including `false`.
+For potentially unfinished enquiries, use `enquiry_started=yes` and exclude
+`enquiry_received=yes`; this is a review clue, not proof of abandonment or lead
+loss. A direct thank-you visit is never tagged as a received enquiry. Save the
+segments in Clarity and add them to My Watchlist; these tags do not automatically
+favorite recordings. PostHog replay settings are unchanged.
+
 ## Email alerts
 
 Two enabled hourly trend alerts notify the existing PostHog user
@@ -60,7 +97,11 @@ insights and email alerts exclude `is_test=true`. Do not submit a sales form.
 For a persistent browser opt-out, set `rcn_analytics_opt_out=1` in localStorage.
 
 Run `node ops/test_rcn_analytics.js` for isolation, privacy, event semantics,
-deduplication, timing, mandatory-destination labels and the legacy Ads baseline.
+deduplication, timing, Clarity queues/watch tags/QA separation/error resilience,
+mandatory-destination labels and the legacy Ads baseline. Clarity QA uses
+`analytics_test=true` and `watch=qa`; use a separate browser session for live QA.
+Do not trigger invalid live submissions: existing incomplete-enquiry handling
+can notify sales even when browser validation prevents the form submission.
 Deploy only the explicit RCN allowlist with `ops/stage_site.py`; compare fresh
 live versions before upload and preserve all live secrets and lead CSVs.
 
