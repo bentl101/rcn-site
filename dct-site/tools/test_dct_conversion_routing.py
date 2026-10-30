@@ -50,6 +50,25 @@ class RoutingTests(unittest.TestCase):
             self.assertEqual(out['ads_conversion_action'], row['ads_conversion_action'])
             self.assertEqual(out['_disable_data_manager'], stop_queue)
 
+    def test_retry_duplicate_receipt_requires_single_original_order(self):
+        request = {'ads_route': 'braid', 'google_ads_request': {'conversions': [
+            {'orderId': 'DCT-TEST-RETRY'}]}}
+        def parse(codes, req=request):
+            response = {'results': [{}], 'partialFailureError': {'details': [
+                {'errors': [{'errorCode': {'conversionUploadError': code}} for code in codes]}]}}
+            return run(d.PARSE_ADS_UPLOAD_JS, response, {'Build Ads Upload': req})[0]['json']
+        for code in ('ORDER_ID_ALREADY_IN_USE', 'CLICK_CONVERSION_ALREADY_EXISTS'):
+            result = parse([code])
+            self.assertTrue(result['ads_upload_accepted'])
+            self.assertTrue(result['ads_upload_already_exists'])
+            self.assertEqual(result['ads_upload_error'], '')
+        for codes in (['DUPLICATE_ORDER_ID'], ['UNPARSEABLE_GCLID'],
+                      ['ORDER_ID_ALREADY_IN_USE', 'EXPIRED_EVENT']):
+            self.assertFalse(parse(codes)['ads_upload_accepted'])
+        self.assertFalse(parse(['ORDER_ID_ALREADY_IN_USE'], {'ads_route': 'braid'})['ads_upload_accepted'])
+        self.assertFalse(parse(['ORDER_ID_ALREADY_IN_USE'], {
+            **request, 'ads_validate_only': True})['ads_upload_accepted'])
+
 
 if __name__ == '__main__':
     unittest.main()

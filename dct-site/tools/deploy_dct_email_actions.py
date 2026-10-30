@@ -461,13 +461,22 @@ const rpc = response.error || null;
 const nodeError = response.errorMessage || response.message || null;
 const failure = partial || rpc || nodeError;
 const results = Array.isArray(response.results) ? response.results : [];
-const accepted = !failure && (request.ads_validate_only || results.some(r => r && Object.keys(r).length > 0));
-const errorText = failure ? (typeof failure === 'string' ? failure : JSON.stringify(failure)) : '';
+// A timed-out request may have reached Google before a transport retry.
+// Only a single conversion with its original order ID can be reconciled this way.
+const conversions = request.google_ads_request?.conversions || [];
+const errors = (partial?.details || []).flatMap(detail => detail.errors || []);
+const alreadyExists = !request.ads_validate_only && !rpc && !nodeError &&
+  conversions.length === 1 && Boolean(conversions[0].orderId) && errors.length > 0 &&
+  errors.every(error => ['ORDER_ID_ALREADY_IN_USE', 'CLICK_CONVERSION_ALREADY_EXISTS']
+    .includes(error.errorCode?.conversionUploadError));
+const accepted = alreadyExists || (!failure && (request.ads_validate_only || results.some(r => r && Object.keys(r).length > 0)));
+const errorText = failure && !alreadyExists ? (typeof failure === 'string' ? failure : JSON.stringify(failure)) : '';
 return [{json:{
   ...request,
   data_manager_queued: dataManagerQueued,
   data_manager_queue_error: dataManagerError,
   ads_upload_accepted: accepted,
+  ads_upload_already_exists: alreadyExists,
   ads_upload_error: errorText,
   ads_results_returned: results.length,
   ads_raw_response: response
@@ -733,6 +742,8 @@ def patch_main_workflow(workflow: dict) -> dict:
         "Upload Click Conversion", "upload-click-conversion", (2100, 80), "uploadClickConversions",
         "={{ $('Build Ads Upload').first().json.google_ads_request }}",
     )
+    by_name["Upload Click Conversion"]["parameters"]["options"]["timeout"] = 60000
+    by_name["Upload Click Conversion"].update(retryOnFail=True, maxTries=3, waitBetweenTries=5000)
     by_name["Parse Ads Upload"] = code_node("Parse Ads Upload", "parse-ads-upload", (2320, 80), PARSE_ADS_UPLOAD_JS, on_error="continueRegularOutput")
     by_name["Build Ads Failure Alert"] = code_node("Build Ads Failure Alert", "build-ads-alert", (2540, 0), BUILD_ADS_ALERT_JS)
     by_name["Send Ads Failure Alert"] = alert_email_node(
