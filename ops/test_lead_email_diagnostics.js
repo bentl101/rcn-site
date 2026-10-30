@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { renderLeadDiagnostics } = require('./lead_email_diagnostics');
+const { renderLeadDiagnostics, appendLeadDiagnostics } = require('./lead_email_diagnostics');
 const empty = renderLeadDiagnostics({}, 'RCN');
 assert(empty.includes('destination, travel_date, duration, budget, guests'));
 assert(empty.includes('Not captured / not supplied'));
@@ -18,3 +18,17 @@ assert(!full.includes('SECRET_'));
 assert.equal(JSON.stringify(lead), before);
 assert(full.includes('defaults may be present'));
 console.log('Diagnostics renderer: missing fields, escaping, false/zero, campaign, no secret leakage and no mutation passed.');
+for (const brand of ['RCN', 'DCT']) {
+  const original = '<h2>Original lead</h2><a href="https://example.com/confirm?token=fixture">Lead is bad - queue retraction</a><table><tr><td>Existing details</td></tr></table>' + (brand === 'RCN' ? '<!-- RCN_TERN_MANUAL_V1 --><p>Tern prompt</p>' : '');
+  const result = appendLeadDiagnostics(lead, brand, original);
+  const start = result.indexOf('<!-- LEAD_DIAGNOSTICS_V2 -->');
+  const end = result.indexOf('<!-- /LEAD_DIAGNOSTICS_V2 -->') + '<!-- /LEAD_DIAGNOSTICS_V2 -->'.length;
+  assert.equal(result.slice(0, start) + result.slice(end), original);
+  assert(result.indexOf('queue retraction') < start);
+  assert(!result.includes('Sender and campaign diagnostics'));
+  assert(!result.includes('<img'));
+  assert(!result.includes('SECRET_'));
+  assert.equal((result.match(/token=fixture/g) || []).length, 1);
+  if (brand === 'RCN') assert(start < result.indexOf('<!-- RCN_TERN_MANUAL_V1 -->'));
+}
+console.log('Compact diagnostics: original HTML/action links preserved byte-for-byte; actions first; Tern last; no duplicate lead table.');

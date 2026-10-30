@@ -42,4 +42,23 @@ function renderLeadDiagnostics(lead = {}, brand = '') {
   return '<!-- LEAD_DIAGNOSTICS_V1 --><section style="font:14px/1.5 Arial,sans-serif;max-width:760px;margin:0 0 24px;color:#172b3a"><h2>Sender and campaign diagnostics</h2><p>Captured information for manual review. Empty fields are shown explicitly. IP location is approximate; browser details and form values can be spoofed. Sparse details alone do not establish whether this is a bot.</p><table style="border-collapse:collapse;width:100%;table-layout:fixed">' + rows.map(([k,v]) => '<tr><th style="text-align:left;vertical-align:top;width:34%;padding:7px;border:1px solid #ddd;background:#f2f5f7">' + esc(k) + '</th><td style="padding:7px;border:1px solid #ddd;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap">' + value(v) + '</td></tr>').join('') + '</table></section><!-- /LEAD_DIAGNOSTICS_V1 -->';
 }
 
-if (typeof module !== 'undefined') module.exports = { renderLeadDiagnostics };
+// Preserve the existing sales email and its action buttons. Add only fields
+// missing from that template, after its details and before the Tern appendix.
+function appendLeadDiagnostics(lead = {}, brand = '', original = '') {
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+  const present = v => v !== null && v !== undefined && String(v).trim() !== '';
+  const bool = v => v === true || v === 1 || v === '1' ? 'Yes' : v === false || v === 0 || v === '0' ? 'No' : '';
+  const missing = ['destination', 'travel_date', 'duration', 'budget', 'guests'].filter(k => !present(lead[k]));
+  const rows = [
+    ['User agent', lead.user_agent],
+    ...(brand === 'DCT' ? [['IP address', lead.ip_address]] : []),
+    ['Trip fields absent', missing.length ? missing.join(', ') : 'None (populated fields may include defaults)'],
+    ...(present(lead.honeypot_filled) ? [['Honeypot filled', bool(lead.honeypot_filled)]] : []),
+  ];
+  const section = '<!-- LEAD_DIAGNOSTICS_V2 --><div style="max-width:600px;font-family:Arial,sans-serif;margin:16px 0"><h3 style="font-size:15px;color:#1A2B3D;margin:0 0 8px">Additional submission details</h3><table style="border-collapse:collapse;width:100%;font-size:14px">' + rows.map(([label, value]) => '<tr><td style="padding:8px 12px;border:1px solid #ddd;background:#f8f9fa;font-weight:bold;width:170px">' + esc(label) + '</td><td style="padding:8px 12px;border:1px solid #ddd;word-break:break-word">' + (present(value) ? esc(value) : 'Not captured / not supplied') + '</td></tr>').join('') + '</table><p style="font-size:12px;color:#666">Browser details can be spoofed; missing fields alone do not prove spam.</p></div><!-- /LEAD_DIAGNOSTICS_V2 -->';
+  const marker = '<!-- RCN_TERN_MANUAL_V1 -->';
+  const offset = original.indexOf(marker);
+  return offset >= 0 ? original.slice(0, offset) + section + original.slice(offset) : original + section;
+}
+
+if (typeof module !== 'undefined') module.exports = { renderLeadDiagnostics, appendLeadDiagnostics };

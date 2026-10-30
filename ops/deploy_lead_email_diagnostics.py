@@ -21,6 +21,9 @@ import urllib.request
 SITES = {'RCN': 'zYw4HtTy1OTH7jUy', 'DCT': 'PmntlqBanV9ZMy3O'}
 ROOT = Path(__file__).resolve().parent
 RENDERER = (ROOT / 'lead_email_diagnostics.js').read_text().split("\nif (typeof module")[0].strip()
+COMPACT_RENDERER = RENDERER[RENDERER.index('function appendLeadDiagnostics('):]
+# Keep the full renderer only for the explicitly requested diagnostic digest.
+RENDERER = RENDERER[:RENDERER.index('// Preserve the existing sales email')].strip()
 BEN = 'btl101@gmail.com'
 
 
@@ -54,16 +57,26 @@ def expression_inner(expression):
 def patch(w, brand):
     result = copy.deepcopy(w)
     params = email_node(result)['parameters']
-    if '<!-- LEAD_DIAGNOSTICS_V1 -->' in params['html']:
+    if '<!-- LEAD_DIAGNOSTICS_V2 -->' in params['html']:
         return result
-    original = expression_inner(params['html'])
     source = '$json.body || {}' if brand == 'RCN' else '$json'
-    params['html'] = '={{ (' + RENDERER + ')(' + source + ', ' + json.dumps(brand) + ') + (' + original + ') }}'
+    original = base_expression(params['html'], brand)
+    params['html'] = '={{ (' + COMPACT_RENDERER + ')(' + source + ', ' + json.dumps(brand) + ', (' + original + ')) }}'
     # Prove that the original expression is the only changed field.
     check = copy.deepcopy(result)
     email_node(check)['parameters']['html'] = email_node(w)['parameters']['html']
     assert check == w
     return result
+
+
+def base_expression(expression, brand):
+    inner = expression_inner(expression)
+    if '<!-- LEAD_DIAGNOSTICS_V1 -->' not in expression:
+        return inner
+    source = '$json.body || {}' if brand == 'RCN' else '$json'
+    separator = ')(' + source + ', ' + json.dumps(brand) + ') + ('
+    assert inner.count(separator) == 1 and inner.endswith(')'), 'Unexpected V1 wrapper'
+    return inner.split(separator, 1)[1][:-1]
 
 
 def js_eval(code, value):
@@ -77,15 +90,23 @@ def js_eval(code, value):
 def validate(w, patched, brand):
     old = email_node(w)['parameters']['html']
     new = email_node(patched)['parameters']['html']
-    for lead in [{'email_html':''}, {'first_name':'<script>bad</script>', 'email':'person@example.com', 'user_agent':'Synthetic QA browser', 'ip_address':'192.0.2.1', 'utm_campaign':'Example campaign', 'time_on_page':0, 'email_html':'<p>ORIGINAL EMAIL</p>'}]:
+    if old == new:
+        return
+    for lead in [{'email_html':''}, {'first_name':'<script>bad</script>', 'email':'person@example.com', 'user_agent':'Synthetic QA browser', 'ip_address':'192.0.2.1', 'utm_campaign':'Example campaign', 'time_on_page':0, 'email_html':'<h2>ORIGINAL EMAIL</h2><a href="https://example.com/confirm">Retract</a>'}]:
         item = {'body':lead} if brand == 'RCN' else lead
         rendered = js_eval(expression_inner(new), item)
-        previous = js_eval(expression_inner(old), item)
-        assert rendered.endswith(previous)
-        assert '<!-- LEAD_DIAGNOSTICS_V1 -->' in rendered
+        previous = js_eval(base_expression(old, brand), item)
+        start = rendered.index('<!-- LEAD_DIAGNOSTICS_V2 -->')
+        end = rendered.index('<!-- /LEAD_DIAGNOSTICS_V2 -->') + len('<!-- /LEAD_DIAGNOSTICS_V2 -->')
+        assert rendered[:start] + rendered[end:] == previous
+        assert rendered.startswith(lead['email_html'])
+        assert '<!-- LEAD_DIAGNOSTICS_V1 -->' not in rendered
         assert '<script>bad</script>' not in rendered
         if lead.get('user_agent'):
-            assert 'Synthetic QA browser' in rendered and '192.0.2.1' in rendered
+            assert 'Synthetic QA browser' in rendered
+            assert rendered.index('Retract') < start
+            if brand == 'DCT':
+                assert '192.0.2.1' in rendered
 
 
 def deploy(apply):
@@ -231,5 +252,5 @@ if __name__ == '__main__':
         selected, summary = collect()
         print(json.dumps({'report_preview':summary}), flush=True)
         if args.report:
-            assert all('<!-- LEAD_DIAGNOSTICS_V1 -->' in email_node(api('GET','/workflows/'+wid))['parameters']['html'] for wid in SITES.values()), 'Deploy diagnostics before sending report'
+            assert all('<!-- LEAD_DIAGNOSTICS_V2 -->' in email_node(api('GET','/workflows/'+wid))['parameters']['html'] for wid in SITES.values()), 'Deploy diagnostics before sending report'
             send_report(selected, summary)
