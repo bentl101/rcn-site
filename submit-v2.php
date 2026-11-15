@@ -146,7 +146,7 @@ $hashed_last_name   = hash_for_ads(normalise_name($last_name));
 // Basic validation — keep gates tight. Anything bot-shaped survives and gets scored.
 if (empty($first_name) || !filter_var($email, FILTER_VALIDATE_EMAIL)
     || empty($travel_date) || empty($duration) || empty($budget)
-    || empty($guests) || empty($operator)) {
+    || empty($guests)) {
     header('Location: ' . $ERROR_URL);
     exit;
 }
