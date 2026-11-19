@@ -738,6 +738,10 @@ def patch_main_workflow(workflow: dict) -> dict:
     )
     by_name["Check Data Manager Queue"] = code_node("Check Data Manager Queue", "dct-check-data-manager-queue", (1660, 0), CHECK_DATA_MANAGER_QUEUE_JS, on_error="continueRegularOutput")
     by_name["Get Google OAuth Token"] = oauth_node("Get Google OAuth Token", "get-google-token", (1880, 80))
+    # A 10s token timeout with no retries sent the upload without credentials (401) on 18 Nov 2026.
+    # Token minting is side-effect free, so transport retries are always safe here.
+    by_name["Get Google OAuth Token"]["parameters"]["options"]["timeout"] = 30000
+    by_name["Get Google OAuth Token"].update(retryOnFail=True, maxTries=3, waitBetweenTries=5000)
     by_name["Upload Click Conversion"] = ads_http_node(
         "Upload Click Conversion", "upload-click-conversion", (2100, 80), "uploadClickConversions",
         "={{ $('Build Ads Upload').first().json.google_ads_request }}",

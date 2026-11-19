@@ -69,6 +69,19 @@ class RoutingTests(unittest.TestCase):
         self.assertFalse(parse(['ORDER_ID_ALREADY_IN_USE'], {
             **request, 'ads_validate_only': True})['ads_upload_accepted'])
 
+    def test_token_and_upload_nodes_retry_transport_failures(self):
+        seed = {'name': 'DCT Form Handler', 'connections': {}, 'settings': {}, 'nodes': [
+            d.webhook_node('DCT Webhook', 'dct-webhook', [0, 0], 'POST', 'dct-form'),
+            d.code_node('Verify Token', 'dct-verify', [200, 0], 'return $input.all();'),
+            {'id': 'email', 'name': 'Send Email Notification', 'type': 'n8n-nodes-base.emailSend',
+             'typeVersion': 2.1, 'position': [500, 0], 'parameters': {}}]}
+        nodes = {n['name']: n for n in d.patch_main_workflow(seed)['nodes']}
+        for name, timeout in (('Get Google OAuth Token', 30000), ('Upload Click Conversion', 60000)):
+            node = nodes[name]
+            self.assertEqual(node['parameters']['options']['timeout'], timeout)
+            self.assertEqual((node['retryOnFail'], node['maxTries'], node['waitBetweenTries']), (True, 3, 5000))
+            self.assertEqual(node['onError'], 'continueRegularOutput')
+
 
 if __name__ == '__main__':
     unittest.main()
