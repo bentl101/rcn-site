@@ -92,7 +92,7 @@ if (!dct_repair_lead_csv(rtrim($dataDir, '/') . '/leads.csv')) {
     exit;
 }
 
-$required = ['first_name', 'last_name', 'email', 'phone', 'destination', 'travel_date', 'duration', 'guests', 'budget'];
+$required = ['first_name', 'email', 'phone'];
 foreach ($required as $key) {
     if (clean_value($key) === '') {
         header('Location: /?form_error=missing#enquire', true, 303);

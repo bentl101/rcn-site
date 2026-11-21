@@ -70,7 +70,7 @@ for(const name of ['index.html','trafalgar-tours.html','globus-journeys.html','c
   assert.equal((html.match(/src="\/assets\/js\/dct-form-ux.js/g)||[]).length,1,name);
   assert(!/<form[^>]*novalidate/.test(html),name);
   assert.match(html,/action="\/submit.php" method="post" data-lead-form/);
-  assert.match(html,/name="last_name"[^>]*required/);assert.match(html,/name="travel_date"[^>]*required/);
+  assert.deepEqual(Array.from(html.matchAll(/<(?:input|select) [^>]*name="([^"]+)"[^>]*\brequired\b[^>]*>/g), match => match[1]), ['first_name', 'email', 'phone'], name);
   assert(!/rcn-form-ux|GTM-5B2VFP82|AW-10929471967/.test(html));
 }
 const builder=fs.readFileSync('dct-site/tools/build_operator_pages.py','utf8');

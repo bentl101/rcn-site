@@ -81,5 +81,7 @@ for(const name of ['index.html','avalon-waterways.html','scenic-river-cruise.htm
   assert(!/<form[^>]*novalidate/.test(html),name);
   assert.match(html,/action="submit-v2.php" method="POST"/);
   assert.match(html,/rcn-incomplete-forms.js/);
+  assert.deepEqual(Array.from(html.matchAll(/<(?:input|select) [^>]*name="([^"]+)"[^>]*\brequired\b[^>]*>/g), match => match[1]), ['first_name', 'email', 'phone'], name);
+  assert.doesNotMatch(html, /el\.value = thisMonth|placeholder="(?:Jane|Smith|jane@example\.com|\(905\) 555-0100)"/, name);
 }
 console.log('PASS: native validation preserved, error batching/focus, correction, accessible descriptions, itinerary prefill, manual edits preserved, no submit interception or attribution mutation; six pages included.');

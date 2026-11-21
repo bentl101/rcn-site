@@ -45,7 +45,7 @@ foreach ($labels as $name => $label) {
     }
     $fields[$name] = trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value));
 }
-$required = ['first_name', 'email', 'phone', 'destination', 'travel_date', 'duration', 'guests', 'budget'];
+$required = ['first_name', 'email', 'phone'];
 $missing = array_values(array_filter($required, function ($name) use ($fields) { return $fields[$name] === ''; }));
 if (!$missing) finish(422, 'no_missing_required_fields');
 

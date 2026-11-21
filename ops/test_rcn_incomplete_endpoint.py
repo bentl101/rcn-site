@@ -52,12 +52,11 @@ with tempfile.TemporaryDirectory(prefix='rcn-incomplete-test-') as directory:
         body = base64.b64decode(encoded).decode()
         assert 'To: btl101@gmail.com' in headers
         assert 'sales@' not in mail and '\nCc:' not in headers and '\nBcc:' not in headers
-        assert '[TEST]' in headers and 'Missing required fields: Phone, Preferred itinerary' in body
+        assert '[TEST]' in headers and 'Missing required fields: Phone\n' in body
         assert 'Email: btl101@gmail.com' in body and 'Ireland:' in body and 'Toronto:' in body
         assert call(payload) == (200, 'duplicate')
         assert (temp / 'mail.txt').read_text() == mail
-        complete = {'page': '/', 'fields': {name: 'filled' for name in
-            ['first_name', 'email', 'phone', 'destination', 'travel_date', 'duration', 'guests', 'budget', 'operator']}}
+        complete = {'page': '/', 'fields': {'first_name': 'TEST', 'email': 'test@example.com', 'phone': '4165550100'}}
         assert call(complete) == (422, 'no_missing_required_fields')
         assert call({'page': '/', 'fields': {}}) == (200, 'accepted'), 'Even empty attempted forms are reported'
         for i in range(28):
